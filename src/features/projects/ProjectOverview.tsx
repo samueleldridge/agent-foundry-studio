@@ -12,6 +12,7 @@ import { useProject } from "@/api/hooks/useProjects";
 import { useRuns } from "@/api/hooks/useRuns";
 import { ErrorState } from "@/components/ErrorState";
 import { PageHeader } from "@/components/PageHeader";
+import { ProjectUnavailableBanner } from "@/components/ProjectUnavailableBanner";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,14 @@ export function ProjectOverview() {
           </>
         }
       />
+
+      {project?.unavailable && (
+        <ProjectUnavailableBanner
+          project={name}
+          envVars={project.unavailable.env_vars ?? []}
+          remedy={project.unavailable.remedy ?? ""}
+        />
+      )}
 
       {isLoading || !project ? (
         <OverviewSkeleton />

@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useParams } from "react-router";
 import { MessageSquarePlusIcon } from "lucide-react";
 import { useChatSessions, useOpenChatSession } from "@/api/hooks/useChat";
+import { useProject } from "@/api/hooks/useProjects";
 import { ErrorState } from "@/components/ErrorState";
 import { PageHeader } from "@/components/PageHeader";
+import { ProjectUnavailableBanner } from "@/components/ProjectUnavailableBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,9 @@ export function ChatScreen() {
   const { name = "" } = useParams();
   const sessions = useChatSessions(name);
   const openSession = useOpenChatSession(name);
+  const project = useProject(name);
+  // Missing runtime secrets: sessions still list; runs can't start.
+  const unavailable = project.data?.unavailable ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Reattach: default to the most recent session once the list loads
@@ -47,11 +52,22 @@ export function ChatScreen() {
             : `Chat with ${name}`
         }
         actions={
-          <Button onClick={newSession} disabled={openSession.isPending}>
+          <Button
+            onClick={newSession}
+            disabled={openSession.isPending || unavailable !== null}
+          >
             <MessageSquarePlusIcon aria-hidden /> New session
           </Button>
         }
       />
+
+      {unavailable && (
+        <ProjectUnavailableBanner
+          project={name}
+          envVars={unavailable.env_vars ?? []}
+          remedy={unavailable.remedy ?? ""}
+        />
+      )}
 
       {sessions.error ? (
         <ErrorState error={sessions.error} title="Could not load chat sessions" />
@@ -102,10 +118,14 @@ export function ChatScreen() {
                 key={selected.session_id}
                 project={name}
                 session={selected}
+                disabled={unavailable !== null}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
-                <Button onClick={newSession} disabled={openSession.isPending}>
+                <Button
+                  onClick={newSession}
+                  disabled={openSession.isPending || unavailable !== null}
+                >
                   <MessageSquarePlusIcon aria-hidden /> Start a session
                 </Button>
               </div>

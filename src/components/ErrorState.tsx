@@ -5,6 +5,10 @@
 import { AlertTriangleIcon, CopyIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError } from "@/api/client";
+import {
+  ProjectUnavailableBanner,
+  unavailableFromError,
+} from "@/components/ProjectUnavailableBanner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +20,12 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ error, title, className }: ErrorStateProps) {
+  // 424 = project unavailable (missing runtime secrets): a friendly
+  // banner with the remedy, not an error wall.
+  const unavailable = unavailableFromError(error);
+  if (unavailable) {
+    return <ProjectUnavailableBanner {...unavailable} className={className} />;
+  }
   const isApi = error instanceof ApiError;
   const errorClass = isApi ? error.envelope.error_class : "UnexpectedError";
   const message =
