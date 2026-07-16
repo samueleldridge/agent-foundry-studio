@@ -51,14 +51,16 @@ uv run foundry studio          # finds ../agent-foundry-studio/dist automaticall
 
 ## Stack
 
-React 19 + Vite + TypeScript (strict) · Tailwind CSS v4 + shadcn/ui (Radix) + lucide-react · TanStack Query · React Router · CodeMirror 6 (YAML/prompt editing) · Recharts · vitest + testing-library + msw. Dark/light theme is class-based, persisted to localStorage, and follows `prefers-color-scheme` by default.
+React 19 + Vite + TypeScript (strict) · Tailwind CSS v4 + shadcn/ui (Radix) + lucide-react · TanStack Query · React Router · CodeMirror 6 (YAML/prompt editing) · Recharts · @xyflow/react + dagre (flow graph) · react-grid-layout (widget dashboards) · vitest + testing-library + msw. Dark/light theme is class-based, persisted to localStorage, and follows `prefers-color-scheme` by default.
 
 ## Layout
 
-- `src/api/` — typed client + generated OpenAPI types
-- `src/components/` — shared primitives (DataTable, CodeEditor, charts, shadcn `ui/`)
-- `src/features/<area>/` — one directory per screen area (projects, configs, catalog, doctor, obs, evals, versions, runs, connections, storage, settings)
+- `src/api/` — typed client + generated OpenAPI types + the `useSSE` hook
+- `src/components/` — shared primitives (DataTable, CodeEditor, EventFeed, charts, shadcn `ui/`)
+- `src/features/<area>/` — one directory per screen area (projects, configs, catalog, doctor, obs, evals, versions, runs, connections, storage, settings, chat, graph, forge, approvals)
+- `src/widgets/` — the widget registry (the settled 12) + widget components
+- `src/dashboard/` — react-grid-layout host + server-side layout persistence (`PUT /api/layouts`)
 - `src/theme/` — ThemeProvider + toggle
-- `tests/` — vitest suites (msw-mocked API), one file per feature area
+- `tests/` — vitest suites (msw-mocked API; SSE driven through a shared EventSource mock), one file per feature area
 
 The normative spec (routes, screens, widget system, graph schema) is the framework repo's `docs/72-web-studio.md`.
