@@ -1,0 +1,55 @@
+# Foundry Studio frontend CI — the Node job from docs/03 § Phase 10c:
+# npm ci → generated-types drift check → lint → typecheck → test → build.
+# (The backend repo keeps its own gate: scripts/smoke_studio.py.)
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  # Generated-types drift check: regenerates src/api/schema.d.ts against a
+  # live control plane (the backend repo, sibling checkout) and diffs.
+  # Requires the agent-foundry repo to be readable by this workflow — for a
+  # private backend set the AGENT_FOUNDRY_TOKEN secret (contents: read).
+  gen-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: samueleldridge/agent-foundry
+          token: ${{ secrets.AGENT_FOUNDRY_TOKEN || github.token }}
+          path: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - name: Boot the control plane (API only)
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run foundry studio --dev --port 4400 --no-open &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4400/api/health > /dev/null && break
+            sleep 1
+          done
+      - run: npm run generate:api:check
