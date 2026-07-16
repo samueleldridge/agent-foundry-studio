@@ -1,0 +1,95 @@
+/*
+ * Foundry Studio theme tokens — the single source of color truth.
+ * Both modes are first-class; components consume tokens, never raw colors.
+ */
+
+:root {
+  --radius: 0.5rem;
+
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, monospace;
+
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.21 0.03 262);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 262);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 262);
+  --primary: oklch(0.55 0.19 262);
+  --primary-foreground: oklch(0.985 0.002 247);
+  --secondary: oklch(0.96 0.006 255);
+  --secondary-foreground: oklch(0.3 0.03 262);
+  --muted: oklch(0.955 0.006 255);
+  --muted-foreground: oklch(0.52 0.02 260);
+  --accent: oklch(0.945 0.01 258);
+  --accent-foreground: oklch(0.25 0.03 262);
+  --destructive: oklch(0.55 0.2 27);
+  --destructive-foreground: oklch(0.985 0.002 247);
+  --border: oklch(0.91 0.008 255);
+  --input: oklch(0.88 0.01 255);
+  --ring: oklch(0.55 0.19 262);
+
+  /* Semantic status set — shared by doctor, health, evals, runs. */
+  --ok: oklch(0.6 0.14 155);
+  --ok-foreground: oklch(0.985 0.002 247);
+  --warn: oklch(0.72 0.15 75);
+  --warn-foreground: oklch(0.25 0.05 75);
+  --fail: oklch(0.55 0.2 27);
+  --fail-foreground: oklch(0.985 0.002 247);
+
+  --sidebar: oklch(0.965 0.005 255);
+  --sidebar-foreground: oklch(0.32 0.03 262);
+  --sidebar-accent: oklch(0.92 0.012 258);
+  --sidebar-accent-foreground: oklch(0.22 0.03 262);
+  --sidebar-border: oklch(0.905 0.008 255);
+
+  /* Chart series palette (Recharts wrappers consume these). */
+  --chart-1: oklch(0.55 0.19 262);
+  --chart-2: oklch(0.62 0.14 180);
+  --chart-3: oklch(0.68 0.15 75);
+  --chart-4: oklch(0.58 0.17 320);
+  --chart-5: oklch(0.6 0.14 155);
+}
+
+.dark {
+  --background: oklch(0.17 0.015 260);
+  --foreground: oklch(0.93 0.006 255);
+  --card: oklch(0.205 0.017 260);
+  --card-foreground: oklch(0.93 0.006 255);
+  --popover: oklch(0.215 0.018 260);
+  --popover-foreground: oklch(0.93 0.006 255);
+  --primary: oklch(0.68 0.16 262);
+  --primary-foreground: oklch(0.15 0.02 262);
+  --secondary: oklch(0.26 0.02 260);
+  --secondary-foreground: oklch(0.9 0.008 255);
+  --muted: oklch(0.25 0.018 260);
+  --muted-foreground: oklch(0.68 0.015 258);
+  --accent: oklch(0.27 0.022 260);
+  --accent-foreground: oklch(0.93 0.006 255);
+  --destructive: oklch(0.62 0.19 27);
+  --destructive-foreground: oklch(0.15 0.02 262);
+  --border: oklch(0.29 0.02 260);
+  --input: oklch(0.33 0.02 260);
+  --ring: oklch(0.68 0.16 262);
+
+  --ok: oklch(0.7 0.15 155);
+  --ok-foreground: oklch(0.15 0.02 262);
+  --warn: oklch(0.78 0.15 80);
+  --warn-foreground: oklch(0.2 0.05 75);
+  --fail: oklch(0.66 0.19 27);
+  --fail-foreground: oklch(0.15 0.02 262);
+
+  --sidebar: oklch(0.19 0.016 260);
+  --sidebar-foreground: oklch(0.85 0.01 255);
+  --sidebar-accent: oklch(0.26 0.02 260);
+  --sidebar-accent-foreground: oklch(0.95 0.005 255);
+  --sidebar-border: oklch(0.27 0.02 260);
+
+  --chart-1: oklch(0.68 0.16 262);
+  --chart-2: oklch(0.7 0.13 180);
+  --chart-3: oklch(0.76 0.14 75);
+  --chart-4: oklch(0.68 0.15 320);
+  --chart-5: oklch(0.7 0.15 155);
+}
