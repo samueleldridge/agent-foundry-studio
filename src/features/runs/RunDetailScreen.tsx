@@ -1,0 +1,141 @@
+/**
+ * Run detail — status card + RunArtifact view (inputs, outputs, state
+ * transitions, llm/tool call indexes). The live SSE event feed attaches in
+ * Phase 10c; here persisted artifacts render.
+ */
+import { Link, useParams } from "react-router";
+import { ArrowLeftIcon } from "lucide-react";
+import { useRun, useRunArtifact } from "@/api/hooks/useRuns";
+import { ErrorState } from "@/components/ErrorState";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  formatCost,
+  formatTimestamp,
+  formatTokens,
+} from "@/lib/format";
+
+function JsonBlock({ value }: { value: unknown }) {
+  return (
+    <pre className="max-h-96 overflow-auto rounded-lg border bg-card p-3 font-mono text-xs">
+      {JSON.stringify(value, null, 2) ?? "null"}
+    </pre>
+  );
+}
+
+export function RunDetailScreen() {
+  const { name = "", runId = "" } = useParams();
+  const run = useRun(runId);
+  const artifact = useRunArtifact(runId);
+
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="Run detail"
+        description={runId}
+        actions={
+          <Button variant="outline" asChild>
+            <Link to={`/projects/${name}/runs`}>
+              <ArrowLeftIcon aria-hidden /> All runs
+            </Link>
+          </Button>
+        }
+      />
+
+      {run.error ? (
+        <ErrorState error={run.error} title="Could not load run" />
+      ) : run.isLoading || !run.data ? (
+        <Skeleton className="h-20 w-full" />
+      ) : (
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-x-8 gap-y-3 pt-4 text-sm">
+            <StatusBadge status={run.data.status} />
+            <div>
+              <p className="text-xs text-muted-foreground">Started</p>
+              <p className="font-mono">{formatTimestamp(run.data.started_at)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Completed</p>
+              <p className="font-mono">{formatTimestamp(run.data.completed_at)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Tokens</p>
+              <p className="font-mono">{formatTokens(run.data.total_tokens)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Cost</p>
+              <p className="font-mono">{formatCost(run.data.total_cost_usd)}</p>
+            </div>
+            {run.data.error_class && (
+              <div>
+                <p className="text-xs text-muted-foreground">Error</p>
+                <p className="font-mono text-fail">{run.data.error_class}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {artifact.error ? (
+        <ErrorState error={artifact.error} title="Could not load run artifact" />
+      ) : artifact.isLoading || !artifact.data ? (
+        <Skeleton className="h-72 w-full" />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Run artifact
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {artifact.data.event_count} events persisted — live feed lands in 10c
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="io">
+              <TabsList>
+                <TabsTrigger value="io">Input / output</TabsTrigger>
+                <TabsTrigger value="state">
+                  State transitions ({(artifact.data.state_transitions ?? []).length})
+                </TabsTrigger>
+                <TabsTrigger value="llm">
+                  LLM calls ({(artifact.data.llm_calls ?? []).length})
+                </TabsTrigger>
+                <TabsTrigger value="tools">
+                  Tool calls ({(artifact.data.tool_calls ?? []).length})
+                </TabsTrigger>
+                <TabsTrigger value="meta">Metadata</TabsTrigger>
+              </TabsList>
+              <TabsContent value="io" className="space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">Inputs</p>
+                <JsonBlock value={artifact.data.inputs} />
+                <p className="text-xs font-medium text-muted-foreground">Outputs</p>
+                <JsonBlock value={artifact.data.outputs} />
+              </TabsContent>
+              <TabsContent value="state">
+                <JsonBlock value={artifact.data.state_transitions} />
+              </TabsContent>
+              <TabsContent value="llm">
+                <JsonBlock value={artifact.data.llm_calls} />
+              </TabsContent>
+              <TabsContent value="tools">
+                <JsonBlock value={artifact.data.tool_calls} />
+              </TabsContent>
+              <TabsContent value="meta">
+                <JsonBlock value={artifact.data.metadata} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
