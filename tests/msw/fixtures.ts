@@ -500,6 +500,68 @@ export const chatSession: ChatSessionInfo = {
   run_ids: [],
   multi_turn: false,
   events_url: "/api/chat/hello/sessions/s_01JXCHATSESSION01/events",
+  input_fields: [{ name: "name", type: "string", required: true }],
+};
+
+/** team_hello — two required input fields: the composer renders the
+ * per-field form instead of demanding raw JSON. */
+export const teamChatSession: ChatSessionInfo = {
+  session_id: "s_01JXTEAMSESSION01",
+  project: "team_hello",
+  created_at: "2026-07-16T09:10:00Z",
+  run_ids: [],
+  multi_turn: false,
+  events_url: "/api/chat/team_hello/sessions/s_01JXTEAMSESSION01/events",
+  input_fields: [
+    { name: "request", type: "string", required: true },
+    { name: "audience", type: "string", required: true },
+  ],
+};
+
+export const teamProjectDetail: ProjectDetail = {
+  ...projectDetail,
+  name: "team_hello",
+  description: "Supervisor + two workers (docs/72 worked example).",
+  flow_pattern: "supervisor",
+  system_version: "9f21ac04be7d3311",
+};
+
+/** rag_hello with its runtime secret missing — the backend detail carries
+ * the `unavailable` block; run-shaped routes 424. */
+export const ragProjectDetail: ProjectDetail = {
+  ...projectDetail,
+  name: "rag_hello",
+  description: "RAG example — retriever behind a cohere connection.",
+  flow_pattern: "single",
+  system_version: "77aa88bb99ccddee",
+  unavailable: {
+    env_vars: ["COHERE_API_KEY"],
+    remedy:
+      "set COHERE_API_KEY in the environment (e.g. the backend repo's " +
+      ".env) and restart foundry studio, or edit the connection to a " +
+      "different credentials_ref",
+  },
+};
+
+export const projectUnavailableError = {
+  error_class: "ProjectUnavailableError",
+  message:
+    "project 'rag_hello' is unavailable: environment variable " +
+    "'COHERE_API_KEY' is not set",
+  context: {
+    project: "rag_hello",
+    env_vars: ["COHERE_API_KEY"],
+    remedy:
+      "set COHERE_API_KEY in the environment (e.g. the backend repo's " +
+      ".env) and restart foundry studio, or edit the connection to a " +
+      "different credentials_ref",
+  },
+  cause_chain: [
+    {
+      error_class: "ConfigLoadError",
+      message: "environment variable 'COHERE_API_KEY' is not set",
+    },
+  ],
 };
 
 export const forgeRunRunning: ForgeRunInfo = {

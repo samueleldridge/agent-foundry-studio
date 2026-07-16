@@ -20,6 +20,9 @@ export const handlers = [
   // Projects
   http.get("/api/projects", () => HttpResponse.json(fx.projects)),
   http.get("/api/projects/hello", () => HttpResponse.json(fx.projectDetail)),
+  http.get("/api/projects/team_hello", () =>
+    HttpResponse.json(fx.teamProjectDetail),
+  ),
 
   // Configs
   http.get("/api/projects/hello/files", () => HttpResponse.json(fx.fileTree)),
