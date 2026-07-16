@@ -1,11 +1,15 @@
 /**
- * Run detail — status card + RunArtifact view (inputs, outputs, state
- * transitions, llm/tool call indexes). The live SSE event feed attaches in
- * Phase 10c; here persisted artifacts render.
+ * Run detail — status card + live event timeline (SSE replay of persisted
+ * RunEvents, staying attached while an in-progress run streams) +
+ * RunArtifact view (inputs, outputs, state transitions, llm/tool call
+ * indexes).
  */
 import { Link, useParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { useRun, useRunArtifact } from "@/api/hooks/useRuns";
+import { useSSE } from "@/api/sse";
+import { EventFeed } from "@/components/EventFeed";
 import { ErrorState } from "@/components/ErrorState";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -32,10 +36,30 @@ function JsonBlock({ value }: { value: unknown }) {
   );
 }
 
+const RUN_TERMINAL = ["run.completed", "run.failed", "run.cancelled"] as const;
+
 export function RunDetailScreen() {
   const { name = "", runId = "" } = useParams();
   const run = useRun(runId);
   const artifact = useRunArtifact(runId);
+  const queryClient = useQueryClient();
+
+  // Event timeline: SSE replay of persisted events; for an in-progress run
+  // the stream stays open and follows live. Terminal frames close it and
+  // refresh the status card + artifact.
+  const live =
+    run.data !== undefined &&
+    !["success", "completed", "failed", "cancelled", "max_hops"].includes(
+      run.data.status,
+    );
+  const feed = useSSE(run.data ? `/api/runs/${runId}/events` : null, {
+    terminalEvents: RUN_TERMINAL,
+    onEvent: (event) => {
+      if ((RUN_TERMINAL as readonly string[]).includes(event.event)) {
+        void queryClient.invalidateQueries({ queryKey: ["runs"] });
+      }
+    },
+  });
 
   return (
     <div className="space-y-4">
@@ -85,6 +109,20 @@ export function RunDetailScreen() {
         </Card>
       )}
 
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Events
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              {live ? `live · stream ${feed.status}` : "replayed from the persisted stream"}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EventFeed events={feed.events} emptyMessage="No events yet." />
+        </CardContent>
+      </Card>
+
       {artifact.error ? (
         <ErrorState error={artifact.error} title="Could not load run artifact" />
       ) : artifact.isLoading || !artifact.data ? (
@@ -95,7 +133,7 @@ export function RunDetailScreen() {
             <CardTitle>
               Run artifact
               <span className="ml-2 text-xs font-normal text-muted-foreground">
-                {artifact.data.event_count} events persisted — live feed lands in 10c
+                {artifact.data.event_count} events persisted
               </span>
             </CardTitle>
           </CardHeader>

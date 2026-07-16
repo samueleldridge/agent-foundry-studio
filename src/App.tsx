@@ -12,13 +12,17 @@ import {
   FileCode2Icon,
   FlaskConicalIcon,
   GitBranchIcon,
+  HammerIcon,
   HeartPulseIcon,
   HistoryIcon,
   LayoutGridIcon,
+  MessageSquareIcon,
   MoonIcon,
   SettingsIcon,
+  ShieldAlertIcon,
   StethoscopeIcon,
   SunIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import { useProjects } from "@/api/hooks/useProjects";
 import { Button } from "@/components/ui/button";
@@ -144,7 +148,7 @@ export default function App() {
       <aside className="flex w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="flex h-13 items-center justify-between border-b border-sidebar-border px-3 py-2.5">
           <Link
-            to="/projects"
+            to="/"
             className="flex items-center gap-2 rounded-md text-sm font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-ring"
           >
             <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -163,6 +167,8 @@ export default function App() {
               <SectionLabel>{project}</SectionLabel>
               <div className="space-y-0.5">
                 <NavItem to={`/projects/${project}`} label="Overview" icon={BoxesIcon} end />
+                <NavItem to={`/projects/${project}/chat`} label="Chat" icon={MessageSquareIcon} />
+                <NavItem to={`/projects/${project}/graph`} label="Flow graph" icon={WorkflowIcon} />
                 <NavItem to={`/projects/${project}/configs`} label="Configs" icon={FileCode2Icon} />
                 <NavItem to={`/projects/${project}/evals`} label="Evals" icon={FlaskConicalIcon} />
                 <NavItem to={`/projects/${project}/versions`} label="Versions" icon={GitBranchIcon} />
@@ -174,7 +180,10 @@ export default function App() {
 
           <SectionLabel>Workspace</SectionLabel>
           <div className="space-y-0.5">
+            <NavItem to="/" label="Dashboard" icon={LayoutGridIcon} end />
             <NavItem to="/projects" label="Projects" icon={BoxesIcon} end />
+            <NavItem to="/forge" label="Forge" icon={HammerIcon} />
+            <NavItem to="/approvals" label="Approvals" icon={ShieldAlertIcon} />
             <NavItem to="/catalog" label="Catalog" icon={BookOpenIcon} />
             <NavItem to="/obs" label="Observability" icon={ActivityIcon} />
             <NavItem to="/doctor" label="Doctor" icon={StethoscopeIcon} />
