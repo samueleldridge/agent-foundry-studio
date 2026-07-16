@@ -2,15 +2,19 @@
  * Fixture payloads mirroring the real studio API responses (sampled from a
  * live Phase 10a control plane).
  */
+import type { GraphExport } from "@/api/graph";
 import type {
   CatalogArtifactDetail,
   CatalogEntry,
   CatalogFiles,
+  ChatSessionInfo,
   ConnectionInfo,
   DoctorReport,
   EvalRunRow,
   FileContent,
   FileTree,
+  ForgeRunInfo,
+  LayoutsDocument,
   ProjectDetail,
   ProjectSummary,
   RunArtifactView,
@@ -389,4 +393,181 @@ export const foundryError = {
   error_class: "ProjectNotFound",
   message: "project 'nope' does not exist under projects/",
   context: { project: "nope" },
+};
+
+// --- Phase 10c fixtures --------------------------------------------------------
+
+/** hello — the single-agent shape (start → agent → end). */
+export const graphHello: GraphExport = {
+  project: "hello",
+  system_version: "e9ce9a8ffe752b9e",
+  pattern: "single",
+  primary_agent: "hello_agent",
+  nodes: [
+    { id: "__start__", kind: "start", role: null, label: "start", group: null, agent: null, function: null },
+    {
+      id: "hello_agent",
+      kind: "agent",
+      role: "single",
+      label: "hello_agent",
+      group: null,
+      agent: {
+        model_binding: "anthropic/claude-haiku-4-5",
+        prompt_version: "v2",
+        tools: ["catalog/http_get_json@v1"],
+        state_read: ["name"],
+        state_write: ["greeting"],
+      },
+      function: null,
+    },
+    { id: "__end__", kind: "end", role: null, label: "end", group: null, agent: null, function: null },
+  ],
+  edges: [
+    { id: "e0", source: "__start__", target: "hello_agent", kind: "sequential", label: null, bidirectional: false },
+    { id: "e1", source: "hello_agent", target: "__end__", kind: "sequential", label: null, bidirectional: false },
+  ],
+  groups: [],
+};
+
+/** team_hello — supervisor + two workers (docs/72 worked example). */
+export const graphTeamHello: GraphExport = {
+  project: "team_hello",
+  system_version: "9f21ac04be7d3311",
+  pattern: "supervisor",
+  primary_agent: "coordinator",
+  nodes: [
+    { id: "__start__", kind: "start", role: null, label: "start", group: null, agent: null, function: null },
+    {
+      id: "coordinator",
+      kind: "agent",
+      role: "supervisor",
+      label: "coordinator",
+      group: null,
+      agent: {
+        model_binding: "anthropic/claude-haiku-4-5",
+        prompt_version: "v1",
+        tools: [],
+        state_read: ["messages", "request"],
+        state_write: ["messages", "final_summary"],
+      },
+      function: null,
+    },
+    {
+      id: "drafter",
+      kind: "agent",
+      role: "worker",
+      label: "drafter",
+      group: null,
+      agent: {
+        model_binding: "anthropic/claude-haiku-4-5",
+        prompt_version: "v1",
+        tools: [],
+        state_read: ["messages", "request"],
+        state_write: ["messages", "draft"],
+      },
+      function: null,
+    },
+    {
+      id: "publisher",
+      kind: "agent",
+      role: "worker",
+      label: "publisher",
+      group: null,
+      agent: {
+        model_binding: "anthropic/claude-haiku-4-5",
+        prompt_version: "v1",
+        tools: ["local/publish_greeting@v1"],
+        state_read: ["messages", "draft"],
+        state_write: ["messages", "published"],
+      },
+      function: null,
+    },
+    { id: "__end__", kind: "end", role: null, label: "end", group: null, agent: null, function: null },
+  ],
+  edges: [
+    { id: "e0", source: "__start__", target: "coordinator", kind: "sequential", label: null, bidirectional: false },
+    { id: "e1", source: "coordinator", target: "drafter", kind: "handoff", label: null, bidirectional: true },
+    { id: "e2", source: "coordinator", target: "publisher", kind: "handoff", label: null, bidirectional: true },
+    { id: "e3", source: "coordinator", target: "__end__", kind: "sequential", label: null, bidirectional: false },
+  ],
+  groups: [],
+};
+
+export const chatSession: ChatSessionInfo = {
+  session_id: "s_01JXCHATSESSION01",
+  project: "hello",
+  created_at: "2026-07-16T09:00:00Z",
+  run_ids: [],
+  multi_turn: false,
+  events_url: "/api/chat/hello/sessions/s_01JXCHATSESSION01/events",
+};
+
+export const forgeRunRunning: ForgeRunInfo = {
+  forge_run_id: "forge_01LIVE",
+  project: "hello",
+  status: "running",
+  threshold: 0.9,
+  final_score: null,
+  best_score: null,
+  iterations: 0,
+  termination_reason: null,
+  termination_detail: "",
+  started_at: "2026-07-16T09:30:00Z",
+  completed_at: null,
+  total_cost_usd: null,
+  trajectory: [],
+};
+
+export const forgeRunFinished: ForgeRunInfo = {
+  forge_run_id: "forge_01DONE",
+  project: "hello",
+  status: "completed",
+  threshold: 0.9,
+  final_score: 0.95,
+  best_score: 0.95,
+  iterations: 2,
+  termination_reason: "threshold_met",
+  termination_detail: "score 0.95 >= threshold 0.9 after iteration 2",
+  started_at: "2026-07-15T18:00:00Z",
+  completed_at: "2026-07-15T18:12:00Z",
+  total_cost_usd: "1.2345",
+  trajectory: [
+    {
+      iteration_number: 1,
+      kind: "iterate",
+      eval_score_after: 0.7,
+      eval_delta: 0.7,
+      commit_shas: ["a1b2c3d4e5f60000000000000000000000000000"],
+      summary: "tightened the greeting prompt",
+      cost_usd: 0.61,
+      applied: true,
+    },
+    {
+      iteration_number: 2,
+      kind: "iterate",
+      eval_score_after: 0.95,
+      eval_delta: 0.25,
+      commit_shas: ["b2c3d4e5f6a70000000000000000000000000000"],
+      summary: "added an output-schema hint",
+      cost_usd: 0.62,
+      applied: true,
+    },
+  ],
+};
+
+/** Empty server layouts document — the client falls back to defaults. */
+export const layoutsEmpty: LayoutsDocument = {
+  version: 1,
+  active: "default",
+  dashboards: {},
+};
+
+export const approvalItem = {
+  run_id: "01KXRUNAPPROVAL01",
+  approval_id: "publish-greeting-1",
+  project: "team_hello",
+  agent_name: "publisher",
+  prompt: "Publish the greeting to the shared channel?",
+  context: { tool: "local/publish_greeting@v1", args: { text: "Hello!" } },
+  requested_at: "2026-07-16T09:45:00Z",
 };

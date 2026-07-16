@@ -143,6 +143,63 @@ export const handlers = [
       skipped_pinned: [],
     });
   }),
+
+  // --- Phase 10c: graph / chat / forge / layouts / approvals ----------------
+  http.get("/api/projects/hello/graph", () => HttpResponse.json(fx.graphHello)),
+  http.get("/api/projects/team_hello/graph", () =>
+    HttpResponse.json(fx.graphTeamHello),
+  ),
+
+  http.get("/api/chat/:project/sessions", () => HttpResponse.json([fx.chatSession])),
+  http.post("/api/chat/:project/sessions", () =>
+    HttpResponse.json(fx.chatSession, { status: 201 }),
+  ),
+  http.post("/api/chat/:project/sessions/:sid/messages", () =>
+    HttpResponse.json({
+      session_id: fx.chatSession.session_id,
+      run_id: "01KXCHATRUN01",
+      events_url: fx.chatSession.events_url,
+    }),
+  ),
+  http.post("/api/chat/:project/sessions/:sid/approvals", () =>
+    HttpResponse.json({
+      run_id: "01KXCHATRUN01",
+      status: "resumed",
+      events_url: "",
+    }),
+  ),
+
+  http.get("/api/forge", () => HttpResponse.json([fx.forgeRunFinished])),
+  http.get("/api/forge/:forgeRunId", () => HttpResponse.json(fx.forgeRunFinished)),
+  http.post("/api/forge", () =>
+    HttpResponse.json(
+      {
+        forge_run_id: "forge_01NEW",
+        project: "hello",
+        events_url: "/api/forge/forge_01NEW/events",
+      },
+      { status: 202 },
+    ),
+  ),
+  http.post("/api/forge/:forgeRunId/cancel", ({ params }) =>
+    HttpResponse.json({
+      forge_run_id: String(params.forgeRunId),
+      status: "cancelling",
+    }),
+  ),
+
+  http.get("/api/layouts", () => HttpResponse.json(fx.layoutsEmpty)),
+  http.put("/api/layouts", async ({ request }) =>
+    HttpResponse.json(await request.json()),
+  ),
+
+  http.post("/api/runs/:runId/resume", ({ params }) =>
+    HttpResponse.json({
+      run_id: String(params.runId),
+      status: "resumed",
+      events_url: "",
+    }),
+  ),
 ];
 
 /** A structured FoundryError envelope response, for error-path tests. */

@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "./msw/server";
+import { MockEventSource } from "./mock-event-source";
 
 // --- Web Storage bridge ------------------------------------------------------
 // Node >= 22 defines its own experimental global `localStorage`, which is
@@ -24,8 +25,15 @@ afterEach(() => {
   server.resetHandlers();
   cleanup();
   localStorage.clear();
+  MockEventSource.reset();
 });
 afterAll(() => server.close());
+
+// --- EventSource -------------------------------------------------------------
+// jsdom ships no EventSource; the SSE surfaces (chat, forge, run detail) get
+// the shared mock. Plain assignment (not vi.stubGlobal) so tests that stub
+// and unstub their own EventSource fall back to this one.
+(globalThis as { EventSource?: unknown }).EventSource = MockEventSource;
 
 // --- jsdom polyfills -------------------------------------------------------
 
@@ -44,13 +52,39 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Recharts ResponsiveContainer + Radix need ResizeObserver.
+// Recharts ResponsiveContainer + Radix + React Flow + react-grid-layout
+// need ResizeObserver.
 class ResizeObserverMock {
   observe() {}
   unobserve() {}
   disconnect() {}
 }
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+
+// React Flow (@xyflow/react) jsdom shims, per the xyflow testing guide.
+class DOMMatrixReadOnlyMock {
+  m22: number;
+  constructor(transform?: string) {
+    const scale = transform?.match(/scale\(([^)]+)\)/)?.[1];
+    this.m22 = scale !== undefined ? +scale : 1;
+  }
+}
+vi.stubGlobal("DOMMatrixReadOnly", DOMMatrixReadOnlyMock);
+
+Object.defineProperties(HTMLElement.prototype, {
+  offsetHeight: {
+    configurable: true,
+    get(this: HTMLElement) {
+      return parseFloat(this.style.height) || 1;
+    },
+  },
+  offsetWidth: {
+    configurable: true,
+    get(this: HTMLElement) {
+      return parseFloat(this.style.width) || 1;
+    },
+  },
+});
 
 // CodeMirror measures the DOM; jsdom Ranges have no geometry.
 const zeroRect = {
@@ -66,6 +100,9 @@ const zeroRect = {
 } as DOMRect;
 
 Range.prototype.getBoundingClientRect = () => zeroRect;
+// React Flow edge rendering asks SVG elements for geometry.
+(SVGElement.prototype as unknown as { getBBox: () => DOMRect }).getBBox = () =>
+  zeroRect;
 Range.prototype.getClientRects = () =>
   ({
     length: 0,

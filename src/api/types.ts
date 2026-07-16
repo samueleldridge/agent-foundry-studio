@@ -66,3 +66,16 @@ export type PinnedItem = Schemas["PinnedItemModel"];
 export type TaskInfo = Schemas["TaskInfo"];
 export type TaskLaunched = Schemas["TaskLaunched"];
 export type StudioHealth = Schemas["StudioHealth"];
+
+// --- Phase 10c surfaces -----------------------------------------------------
+
+export type ChatSessionInfo = Schemas["ChatSessionInfo"];
+export type ChatMessageRequest = Schemas["ChatMessageRequest"];
+export type ChatMessageResponse = Schemas["ChatMessageResponse"];
+export type ResumeRequest = Schemas["ResumeRequest"];
+export type ResumeResponse = Schemas["ResumeResponse"];
+
+export type ForgeLaunchRequest = Schemas["ForgeLaunchRequest"];
+export type ForgeRunInfo = Schemas["ForgeRunInfo"];
+
+export type LayoutsDocument = Schemas["LayoutsDocument"];
