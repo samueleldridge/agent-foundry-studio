@@ -1063,6 +1063,26 @@ export interface components {
             /** Schema Change */
             schema_change?: string | null;
         };
+        /**
+         * ChatInputField
+         * @description One field of the project's derived input model — the composer
+         *     renders a per-field form from these instead of demanding raw JSON
+         *     (docs/72 § Chat UX).
+         */
+        ChatInputField: {
+            /** Name */
+            name: string;
+            /**
+             * Type
+             * @default string
+             */
+            type: string;
+            /**
+             * Required
+             * @default true
+             */
+            required: boolean;
+        };
         /** ChatMessageRequest */
         ChatMessageRequest: {
             /** Text */
@@ -1100,6 +1120,8 @@ export interface components {
              * @default
              */
             events_url: string;
+            /** Input Fields */
+            input_fields?: components["schemas"]["ChatInputField"][];
         };
         /** CommitModel */
         CommitModel: {
@@ -1657,6 +1679,7 @@ export interface components {
              * @default
              */
             system_version: string;
+            unavailable?: components["schemas"]["ProjectUnavailableInfo"] | null;
         };
         /** ProjectSummary */
         ProjectSummary: {
@@ -1693,6 +1716,20 @@ export interface components {
              * @default
              */
             health_detail: string;
+        };
+        /**
+         * ProjectUnavailableInfo
+         * @description Why a project cannot RUN in this studio process (missing runtime
+         *     secrets) — stored state stays browsable; the UI banners this.
+         */
+        ProjectUnavailableInfo: {
+            /** Env Vars */
+            env_vars?: string[];
+            /**
+             * Remedy
+             * @default
+             */
+            remedy: string;
         };
         /** PromoteRequest */
         PromoteRequest: {

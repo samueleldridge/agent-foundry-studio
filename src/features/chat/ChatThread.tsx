@@ -17,11 +17,10 @@ import {
   CircleXIcon,
   LoaderIcon,
   RotateCcwIcon,
-  SendIcon,
   ShieldAlertIcon,
   WrenchIcon,
 } from "lucide-react";
-import { apiGet, ApiError } from "@/api/client";
+import { apiGet } from "@/api/client";
 import { useSSE } from "@/api/sse";
 import {
   useResolveChatApproval,
@@ -40,6 +39,7 @@ import {
   type ApprovalState,
   type ChatTurn,
 } from "./chat-thread";
+import { ChatComposer } from "./ChatComposer";
 
 // --- activity strip ---------------------------------------------------------
 
@@ -357,9 +357,17 @@ export interface ChatThreadProps {
   session: ChatSessionInfo;
   /** Widget mode: denser, no run footers. */
   compact?: boolean;
+  /** Project unavailable (missing runtime secrets): thread renders,
+   * composer is disabled — the screen shows the banner. */
+  disabled?: boolean;
 }
 
-export function ChatThread({ project, session, compact = false }: ChatThreadProps) {
+export function ChatThread({
+  project,
+  session,
+  compact = false,
+  disabled = false,
+}: ChatThreadProps) {
   const eventsUrl =
     session.events_url ||
     `/api/chat/${project}/sessions/${session.session_id}/events`;
@@ -371,7 +379,6 @@ export function ChatThread({ project, session, compact = false }: ChatThreadProp
   // their user text from the persisted run artifact.
   const [sentTexts, setSentTexts] = useState<Record<string, string>>({});
   const [initialRunIds] = useState(() => new Set(session.run_ids ?? []));
-  const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const turns = useMemo(() => reduceThread(events), [events]);
@@ -387,17 +394,9 @@ export function ChatThread({ project, session, compact = false }: ChatThreadProp
     send.mutate(text, {
       onSuccess: (res) => {
         setSentTexts((prev) => ({ ...prev, [res.run_id]: text }));
-        setDraft("");
       },
     });
   };
-
-  const sendError = send.error;
-  const requiredFields =
-    sendError instanceof ApiError &&
-    Array.isArray(sendError.envelope.context.required_fields)
-      ? (sendError.envelope.context.required_fields as string[])
-      : null;
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-slot="chat-thread">
@@ -434,69 +433,14 @@ export function ChatThread({ project, session, compact = false }: ChatThreadProp
       </div>
 
       <div className="border-t p-3">
-        {sendError && (
-          <div className="mb-2 rounded-md border border-fail/40 bg-fail/5 px-2.5 py-1.5 text-xs text-fail">
-            {sendError instanceof ApiError
-              ? sendError.envelope.message
-              : String(sendError)}
-            {requiredFields && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="ml-2 h-6"
-                onClick={() =>
-                  setDraft(
-                    JSON.stringify(
-                      Object.fromEntries(requiredFields.map((f) => [f, ""])),
-                      null,
-                      2,
-                    ),
-                  )
-                }
-              >
-                Insert input template
-              </Button>
-            )}
-          </div>
-        )}
-        <form
-          className="flex items-end gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            sendText(draft);
-          }}
-        >
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendText(draft);
-              }
-            }}
-            placeholder={
-              session.multi_turn
-                ? "Message… (Enter to send)"
-                : "Message… (single-turn: each message is an independent run)"
-            }
-            rows={compact ? 1 : 2}
-            className="min-h-9 flex-1 resize-none"
-            aria-label="Chat message"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={send.isPending || draft.trim() === ""}
-            aria-label="Send message"
-          >
-            {send.isPending ? (
-              <LoaderIcon className="animate-spin" aria-hidden />
-            ) : (
-              <SendIcon aria-hidden />
-            )}
-          </Button>
-        </form>
+        <ChatComposer
+          session={session}
+          pending={send.isPending}
+          disabled={disabled}
+          compact={compact}
+          error={send.error}
+          onSend={sendText}
+        />
         {!compact && (
           <p className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground">
             <span>session {session.session_id.slice(0, 12)}</span>

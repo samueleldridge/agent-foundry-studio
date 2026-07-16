@@ -10,6 +10,7 @@ type Schemas = components["schemas"];
 export type ProjectSummary = Schemas["ProjectSummary"];
 export type ProjectDetail = Schemas["ProjectDetail"];
 export type ProjectAgent = Schemas["ProjectAgent"];
+export type ProjectUnavailableInfo = Schemas["ProjectUnavailableInfo"];
 export type ProjectCreateResponse = Schemas["ProjectCreateResponse"];
 
 export type FileTree = Schemas["FileTree"];
@@ -70,6 +71,7 @@ export type StudioHealth = Schemas["StudioHealth"];
 // --- Phase 10c surfaces -----------------------------------------------------
 
 export type ChatSessionInfo = Schemas["ChatSessionInfo"];
+export type ChatInputField = Schemas["ChatInputField"];
 export type ChatMessageRequest = Schemas["ChatMessageRequest"];
 export type ChatMessageResponse = Schemas["ChatMessageResponse"];
 export type ResumeRequest = Schemas["ResumeRequest"];
