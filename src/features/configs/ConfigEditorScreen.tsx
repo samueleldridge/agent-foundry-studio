@@ -282,6 +282,17 @@ function EditorPane({
         </div>
       )}
 
+      {content.includes("model_binding") && (
+        <p className="text-xs text-muted-foreground" data-slot="model-binding-hint">
+          Editing a <code className="font-mono">model_binding</code>?{" "}
+          <Link to="/providers" className="text-primary hover:underline">
+            Browse providers &amp; models
+          </Link>{" "}
+          for model ids, context windows, pricing — and to add the
+          provider&apos;s API key.
+        </p>
+      )}
+
       <div className="h-[52vh] overflow-hidden rounded-lg border">
         <CodeEditor
           value={content}

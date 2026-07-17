@@ -19,6 +19,7 @@ import { EvalDetailScreen } from "./features/evals/EvalDetailScreen";
 import { VersionsScreen } from "./features/versions/VersionsScreen";
 import { ConnectionsScreen } from "./features/connections/ConnectionsScreen";
 import { StorageScreen } from "./features/storage/StorageScreen";
+import { ProvidersScreen } from "./features/providers/ProvidersScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { ChatScreen } from "./features/chat/ChatScreen";
 import { GraphScreen } from "./features/graph/GraphScreen";
@@ -51,6 +52,7 @@ export const routes: RouteObject[] = [
       { path: "obs", element: <ObsScreen /> },
       { path: "doctor", element: <DoctorScreen /> },
       { path: "storage", element: <StorageScreen /> },
+      { path: "providers", element: <ProvidersScreen /> },
       { path: "settings", element: <SettingsScreen /> },
       {
         path: "*",

@@ -195,6 +195,38 @@ export const handlers = [
     }),
   ),
 
+  // Providers
+  http.get("/api/providers", () => HttpResponse.json(fx.providers)),
+  http.get("/api/providers/keys", () => HttpResponse.json(fx.providerKeys)),
+  http.put("/api/providers/:name/key", async ({ params, request }) => {
+    const body = (await request.json()) as { api_key: string };
+    return HttpResponse.json({
+      provider: String(params.name),
+      var_name: `${String(params.name).toUpperCase()}_API_KEY`,
+      set: true,
+      source: "studio",
+      last4: body.api_key.slice(-4),
+    });
+  }),
+  http.delete("/api/providers/:name/key", ({ params }) =>
+    HttpResponse.json({
+      provider: String(params.name),
+      var_name: `${String(params.name).toUpperCase()}_API_KEY`,
+      set: false,
+      source: "unset",
+      last4: null,
+    }),
+  ),
+  http.post("/api/providers/:name/key/verify", ({ params }) =>
+    HttpResponse.json({
+      provider: String(params.name),
+      var_name: `${String(params.name).toUpperCase()}_API_KEY`,
+      ok: true,
+      status_code: 200,
+      detail: "credentials accepted",
+    }),
+  ),
+
   http.get("/api/layouts", () => HttpResponse.json(fx.layoutsEmpty)),
   http.put("/api/layouts", async ({ request }) =>
     HttpResponse.json(await request.json()),

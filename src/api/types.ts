@@ -81,3 +81,13 @@ export type ForgeLaunchRequest = Schemas["ForgeLaunchRequest"];
 export type ForgeRunInfo = Schemas["ForgeRunInfo"];
 
 export type LayoutsDocument = Schemas["LayoutsDocument"];
+
+// --- Provider panel -----------------------------------------------------------
+
+export type ProviderInfo = Schemas["ProviderInfo"];
+export type ProviderModelInfo = Schemas["ProviderModelInfo"];
+export type ProviderModelPricing = Schemas["ProviderModelPricing"];
+export type ProviderEmbeddingModelInfo = Schemas["ProviderEmbeddingModelInfo"];
+export type ProviderKeyStatus = Schemas["ProviderKeyStatus"];
+export type ProviderKeyRequest = Schemas["ProviderKeyRequest"];
+export type ProviderKeyVerifyResult = Schemas["ProviderKeyVerifyResult"];

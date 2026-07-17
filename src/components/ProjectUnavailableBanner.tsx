@@ -1,12 +1,15 @@
 /**
  * Banner for a project whose runtime secrets are missing (backend 424
  * `ProjectUnavailableError` / project-detail `unavailable` block): names
- * the env var(s), shows the remedy, links to the connections screen.
+ * the env var(s), shows the remedy, links to the connections screen —
+ * and, when a missing var is a provider API key, to the Providers panel
+ * where the key can be added without a studio restart.
  * Stored state (sessions, runs, versions) stays browsable around it.
  */
 import { Link } from "react-router";
-import { KeyRoundIcon } from "lucide-react";
+import { CpuIcon, KeyRoundIcon } from "lucide-react";
 import { ApiError } from "@/api/client";
+import { useProviderKeys } from "@/api/hooks/useProviders";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,6 +38,11 @@ export function ProjectUnavailableBanner({
   className,
 }: UnavailableInfo & { className?: string }) {
   const vars = envVars.length > 0 ? envVars : ["(unknown)"];
+  const { data: keyStatuses } = useProviderKeys();
+  const providerVars = new Set(
+    (keyStatuses ?? []).map((status) => status.var_name),
+  );
+  const missingProviderKey = envVars.some((name) => providerVars.has(name));
   return (
     <Alert
       variant="warning"
@@ -62,18 +70,32 @@ export function ProjectUnavailableBanner({
             sessions, runs, and versions remain browsable.
           </p>
           {remedy && <p className="mt-1">{remedy}</p>}
-          {project && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 border-warn/40"
-              asChild
-            >
-              <Link to={`/projects/${project}/connections`}>
-                Review connections
-              </Link>
-            </Button>
-          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {missingProviderKey && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-warn/40"
+                asChild
+              >
+                <Link to="/providers">
+                  <CpuIcon aria-hidden /> Add key in Providers
+                </Link>
+              </Button>
+            )}
+            {project && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-warn/40"
+                asChild
+              >
+                <Link to={`/projects/${project}/connections`}>
+                  Review connections
+                </Link>
+              </Button>
+            )}
+          </div>
         </AlertDescription>
       </div>
     </Alert>

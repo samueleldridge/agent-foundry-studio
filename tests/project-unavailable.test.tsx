@@ -45,10 +45,42 @@ describe("project unavailable (missing runtime secrets)", () => {
     expect(
       screen.getByRole("link", { name: "Review connections" }),
     ).toHaveAttribute("href", "/projects/rag_hello/connections");
+    // COHERE_API_KEY is a provider key → the banner cross-links to the
+    // Providers panel where it can be added without a restart.
+    expect(
+      await screen.findByRole("link", { name: /Add key in Providers/ }),
+    ).toHaveAttribute("href", "/providers");
     // Runs can't start without the secret.
     expect(
       screen.getByRole("button", { name: /New session/ }),
     ).toBeDisabled();
+  });
+
+  it("omits the Providers cross-link when the missing var is not a provider key", async () => {
+    server.use(
+      http.get("/api/projects/rag_hello", () =>
+        HttpResponse.json({
+          ...ragProjectDetail,
+          unavailable: {
+            env_vars: ["INTERNAL_DB_PASSWORD"],
+            remedy: "set INTERNAL_DB_PASSWORD and restart foundry studio",
+          },
+        }),
+      ),
+      http.get("/api/chat/rag_hello/sessions", () => HttpResponse.json([])),
+    );
+    renderRoute("/projects/rag_hello/chat");
+
+    const banner = await screen.findByRole("alert");
+    expect(banner).toHaveTextContent("INTERNAL_DB_PASSWORD");
+    // Key statuses have loaded (connections link is there) …
+    expect(
+      screen.getByRole("link", { name: "Review connections" }),
+    ).toBeInTheDocument();
+    // … but a non-provider var gets no Providers cross-link.
+    expect(
+      screen.queryByRole("link", { name: /Add key in Providers/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("chat screen still lists stored sessions and disables the thread composer", async () => {

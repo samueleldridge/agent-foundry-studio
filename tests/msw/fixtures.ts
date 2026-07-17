@@ -17,6 +17,8 @@ import type {
   LayoutsDocument,
   ProjectDetail,
   ProjectSummary,
+  ProviderInfo,
+  ProviderKeyStatus,
   RunArtifactView,
   RunListItem,
   StorageStats,
@@ -644,3 +646,97 @@ export const approvalItem = {
   context: { tool: "local/publish_greeting@v1", args: { text: "Hello!" } },
   requested_at: "2026-07-16T09:45:00Z",
 };
+
+// --- providers (docs/72 § Provider panel) --------------------------------------------
+
+export const providers: ProviderInfo[] = [
+  {
+    name: "anthropic",
+    label: "Anthropic",
+    kind: "llm",
+    stub: false,
+    note: "",
+    credentials_env: "ANTHROPIC_API_KEY",
+    models: [
+      {
+        id: "claude-sonnet-4-5",
+        context_window: 200000,
+        max_output_tokens: 64000,
+        capabilities: ["cache_control", "extended_thinking", "vision", "tool_use"],
+        reasoning: true,
+        pricing: {
+          input_per_1m: 3.0,
+          output_per_1m: 15.0,
+          cache_read_per_1m: 0.3,
+          cache_write_per_1m: 3.75,
+        },
+      },
+      {
+        id: "claude-haiku-4-5",
+        context_window: 200000,
+        max_output_tokens: 64000,
+        capabilities: ["cache_control", "tool_use"],
+        reasoning: true,
+        pricing: {
+          input_per_1m: 1.0,
+          output_per_1m: 5.0,
+          cache_read_per_1m: 0.1,
+          cache_write_per_1m: 1.25,
+        },
+      },
+    ],
+    embedding_models: [],
+  },
+  {
+    name: "voyage",
+    label: "Voyage AI",
+    kind: "embedder",
+    stub: false,
+    note: "",
+    credentials_env: "VOYAGE_API_KEY",
+    models: [],
+    embedding_models: [
+      {
+        id: "voyage-3",
+        dimensions: 1024,
+        max_input_tokens: 32000,
+        max_batch_size: 128,
+        input_per_1m: 0.06,
+      },
+    ],
+  },
+  {
+    name: "bedrock",
+    label: "AWS Bedrock",
+    kind: "llm",
+    stub: true,
+    note: "Phase 1 stub. Bedrock authenticates through the AWS credential chain (AWS_PROFILE / IAM role), not a single API key, so the studio does not manage credentials for it yet.",
+    credentials_env: null,
+    models: [],
+    embedding_models: [],
+  },
+];
+
+export const providerKeys: ProviderKeyStatus[] = [
+  {
+    provider: "anthropic",
+    var_name: "ANTHROPIC_API_KEY",
+    set: true,
+    source: "environment",
+    last4: null,
+  },
+  {
+    provider: "voyage",
+    var_name: "VOYAGE_API_KEY",
+    set: false,
+    source: "unset",
+    last4: null,
+  },
+  {
+    provider: "cohere",
+    var_name: "COHERE_API_KEY",
+    set: false,
+    source: "unset",
+    last4: null,
+  },
+];

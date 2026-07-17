@@ -3,8 +3,15 @@
  * Layout reset arrives with widget dashboards in 10c.
  */
 import { useState } from "react";
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { KeyRoundIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import {
+  CpuIcon,
+  KeyRoundIcon,
+  MonitorIcon,
+  MoonIcon,
+  SunIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import { apiGet, getAuthToken, setAuthToken } from "@/api/client";
 import type { StudioHealth } from "@/api/types";
@@ -80,6 +87,25 @@ export function SettingsScreen() {
               />
               <Button onClick={saveToken}>Save</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CpuIcon className="size-4 text-muted-foreground" aria-hidden />
+              Provider API keys
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <p className="text-muted-foreground">
+              Per-provider model API keys (Anthropic, OpenAI, Voyage, Cohere)
+              live in the Providers panel — stored server-side, never returned
+              to the browser.
+            </p>
+            <Button variant="outline" asChild>
+              <Link to="/providers">Open Providers</Link>
+            </Button>
           </CardContent>
         </Card>
 

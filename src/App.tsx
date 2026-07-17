@@ -8,6 +8,7 @@ import {
   BoxesIcon,
   CableIcon,
   ChevronsUpDownIcon,
+  CpuIcon,
   DatabaseIcon,
   FileCode2Icon,
   FlaskConicalIcon,
@@ -188,6 +189,7 @@ export default function App() {
             <NavItem to="/obs" label="Observability" icon={ActivityIcon} />
             <NavItem to="/doctor" label="Doctor" icon={StethoscopeIcon} />
             <NavItem to="/storage" label="Storage" icon={DatabaseIcon} />
+            <NavItem to="/providers" label="Providers" icon={CpuIcon} />
             <NavItem to="/settings" label="Settings" icon={SettingsIcon} />
           </div>
         </nav>

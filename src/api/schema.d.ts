@@ -56,6 +56,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Providers */
+        get: operations["list_providers_api_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/providers/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Key Statuses */
+        get: operations["key_statuses_api_providers_keys_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/providers/{name}/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Put Key */
+        put: operations["put_key_api_providers__name__key_put"];
+        post?: never;
+        /** Delete Key */
+        delete: operations["delete_key_api_providers__name__key_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/providers/{name}/key/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Key */
+        post: operations["verify_key_api_providers__name__key_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{name}/files": {
         parameters: {
             query?: never;
@@ -1790,6 +1859,136 @@ export interface components {
              */
             commit_sha: string;
         };
+        /**
+         * ProviderEmbeddingModelInfo
+         * @description One embedding model from the embedder registry.
+         */
+        ProviderEmbeddingModelInfo: {
+            /** Id */
+            id: string;
+            /** Dimensions */
+            dimensions: number;
+            /** Max Input Tokens */
+            max_input_tokens: number;
+            /** Max Batch Size */
+            max_batch_size: number;
+            /** Input Per 1M */
+            input_per_1m: number;
+        };
+        /** ProviderInfo */
+        ProviderInfo: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "llm" | "embedder";
+            /**
+             * Stub
+             * @default false
+             */
+            stub: boolean;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Credentials Env */
+            credentials_env?: string | null;
+            /** Models */
+            models?: components["schemas"]["ProviderModelInfo"][];
+            /** Embedding Models */
+            embedding_models?: components["schemas"]["ProviderEmbeddingModelInfo"][];
+        };
+        /** ProviderKeyRequest */
+        ProviderKeyRequest: {
+            /** Api Key */
+            api_key: string;
+        };
+        /**
+         * ProviderKeyStatus
+         * @description Key status ONLY — the stored key value never appears in any
+         *     response (docs/72 § Provider panel, redaction rule).
+         */
+        ProviderKeyStatus: {
+            /** Provider */
+            provider: string;
+            /** Var Name */
+            var_name: string;
+            /**
+             * Set
+             * @default false
+             */
+            set: boolean;
+            /**
+             * Source
+             * @default unset
+             * @enum {string}
+             */
+            source: "studio" | "environment" | "unset";
+            /** Last4 */
+            last4?: string | null;
+        };
+        /** ProviderKeyVerifyResult */
+        ProviderKeyVerifyResult: {
+            /** Provider */
+            provider: string;
+            /** Var Name */
+            var_name: string;
+            /** Ok */
+            ok: boolean;
+            /** Status Code */
+            status_code?: number | null;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+        };
+        /**
+         * ProviderModelInfo
+         * @description One generation model from a provider's capability/pricing manifest.
+         */
+        ProviderModelInfo: {
+            /** Id */
+            id: string;
+            /** Context Window */
+            context_window: number;
+            /** Max Output Tokens */
+            max_output_tokens: number;
+            /** Capabilities */
+            capabilities?: string[];
+            /**
+             * Reasoning
+             * @default false
+             */
+            reasoning: boolean;
+            pricing: components["schemas"]["ProviderModelPricing"];
+        };
+        /**
+         * ProviderModelPricing
+         * @description Per-1M-token USD prices, mirrored from the shipped manifests
+         *     (indicative, not authoritative — docs/11 § ModelPricing).
+         */
+        ProviderModelPricing: {
+            /** Input Per 1M */
+            input_per_1m: number;
+            /** Output Per 1M */
+            output_per_1m: number;
+            /**
+             * Cache Read Per 1M
+             * @default 0
+             */
+            cache_read_per_1m: number;
+            /**
+             * Cache Write Per 1M
+             * @default 0
+             */
+            cache_write_per_1m: number;
+        };
         /** ResumeRequest */
         ResumeRequest: {
             /** Approval Id */
@@ -2176,6 +2375,143 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_providers_api_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderInfo"][];
+                };
+            };
+        };
+    };
+    key_statuses_api_providers_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderKeyStatus"][];
+                };
+            };
+        };
+    };
+    put_key_api_providers__name__key_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderKeyStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_key_api_providers__name__key_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderKeyStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_key_api_providers__name__key_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderKeyVerifyResult"];
                 };
             };
             /** @description Validation Error */
