@@ -90,6 +90,30 @@ export function mergeIterations(
   return [...byIteration.values()].sort((a, b) => a.iteration - b.iteration);
 }
 
+export interface Backoff {
+  attempt: number;
+  delayS: number;
+  rateLimited: boolean;
+  errorClass: string;
+}
+
+/**
+ * The CURRENT provider backoff, if the stream is inside one: the latest
+ * `provider.retry` frame with no later activity after it. Any newer frame
+ * (llm/tool/forge events) means the retry proceeded — banner clears.
+ */
+export function backoffFromEvents(events: SSEEvent[]): Backoff | null {
+  const last = events[events.length - 1];
+  if (!last || last.event !== "provider.retry") return null;
+  const d = asRecord(last.data);
+  return {
+    attempt: Number(d.attempt ?? 0),
+    delayS: num(d.delay_s) ?? 0,
+    rateLimited: d.rate_limited === true,
+    errorClass: String(d.error_class ?? ""),
+  };
+}
+
 /** `meta_agent.violation` frames — surfaced prominently, never buried. */
 export function violationsFromEvents(events: SSEEvent[]): SandboxViolation[] {
   return events

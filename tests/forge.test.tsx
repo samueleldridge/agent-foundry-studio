@@ -189,6 +189,171 @@ describe("forge console", () => {
     await waitFor(() => expect(cancelled).toBe(true));
   });
 
+  it("creates a new project from the forge console and prefills the launch form", async () => {
+    const user = userEvent.setup();
+    renderRoute("/forge");
+
+    await user.click(await screen.findByRole("tab", { name: "New project" }));
+    await user.type(screen.getByLabelText("Project name"), "qa_bot");
+    await user.click(screen.getByRole("button", { name: /Create project/ }));
+
+    // The created skeleton is surfaced: dir, branch, files.
+    expect(await screen.findByText("/repo/projects/qa_bot")).toBeInTheDocument();
+    expect(screen.getByText("foundry/qa_bot")).toBeInTheDocument();
+    expect(screen.getByText("README.md")).toBeInTheDocument();
+    expect(screen.getByText("evals/qa_bot.yaml")).toBeInTheDocument();
+
+    // Starter eval deep-links into the config editor.
+    expect(
+      screen.getByRole("link", { name: /Open starter eval in the editor/ }),
+    ).toHaveAttribute(
+      "href",
+      "/projects/qa_bot/configs?file=evals%2Fqa_bot.yaml",
+    );
+
+    // Launch form prefilled with the new project + its eval path.
+    expect(screen.getByLabelText("Eval set path")).toHaveValue(
+      "projects/qa_bot/evals/qa_bot.yaml",
+    );
+    expect(
+      screen.getByRole("combobox", { name: "Project" }),
+    ).toHaveTextContent("qa_bot");
+  });
+
+  it("renders the dirty-tree refusal with the uncommitted files named", async () => {
+    server.use(
+      http.post("/api/projects", () =>
+        HttpResponse.json(
+          {
+            error_class: "ConfigValidationError",
+            message:
+              "working tree has uncommitted changes; commit or stash first",
+            context: {
+              name: "qa_bot",
+              dirty_files: [
+                "projects/hello/scratch.txt",
+                "docs/notes.md",
+              ],
+            },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderRoute("/forge");
+
+    await user.click(await screen.findByRole("tab", { name: "New project" }));
+    await user.type(screen.getByLabelText("Project name"), "qa_bot");
+    await user.click(screen.getByRole("button", { name: /Create project/ }));
+
+    expect(
+      await screen.findByText("Working tree has uncommitted changes"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("projects/hello/scratch.txt")).toBeInTheDocument();
+    expect(screen.getByText("docs/notes.md")).toBeInTheDocument();
+  });
+
+  it("prefills max iterations from the health default and submits it", async () => {
+    let launchBody: Record<string, unknown> | null = null;
+    server.use(
+      http.get("/api/health", () =>
+        HttpResponse.json({
+          status: "ok",
+          version: "0.1.0",
+          uptime_s: 1,
+          active_forge_runs: 0,
+          active_chat_sessions: 0,
+          run_manager_pool: 0,
+          forge_max_iter_default: 7,
+        }),
+      ),
+      http.post("/api/forge", async ({ request }) => {
+        launchBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(
+          {
+            forge_run_id: "forge_01NEW",
+            project: "hello",
+            events_url: "/api/forge/forge_01NEW/events",
+          },
+          { status: 202 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    renderRoute("/forge");
+
+    // The env-resolved default (FOUNDRY_FORGE_MAX_ITER) is reflected.
+    await waitFor(() =>
+      expect(screen.getByLabelText("Max iterations")).toHaveValue(7),
+    );
+    expect(screen.getByText(/FOUNDRY_FORGE_MAX_ITER/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("combobox", { name: "Project" }));
+    await user.click(await screen.findByRole("option", { name: "hello" }));
+    await user.type(screen.getByLabelText("Eval set path"), "evals/e.yaml");
+    await user.type(screen.getByLabelText("Description"), "x");
+    await user.click(screen.getByRole("button", { name: /Launch forge/ }));
+
+    await waitFor(() =>
+      expect(launchBody).toMatchObject({ project: "hello", max_iter: 7 }),
+    );
+  });
+
+  it("shows a rate-limit backoff banner while the provider backs off, then clears it", async () => {
+    server.use(
+      http.get("/api/forge/forge_01LIVE", () =>
+        HttpResponse.json(forgeRunRunning),
+      ),
+    );
+    renderRoute("/forge/forge_01LIVE");
+    const stream = await waitFor(() => {
+      const s = MockEventSource.latestFor("/api/forge/forge_01LIVE/events");
+      expect(s).toBeDefined();
+      return s!;
+    });
+
+    act(() => {
+      stream.emit(
+        "provider.retry",
+        {
+          agent_name: "meta_agent",
+          provider: "anthropic",
+          model: "claude-opus-4-7",
+          attempt: 3,
+          delay_s: 32,
+          error_class: "ProviderRateLimitError",
+          rate_limited: true,
+          retry_after_s: null,
+        },
+        "1",
+      );
+    });
+    expect(
+      screen.getByText(/Backing off 32s \(rate limited\) — attempt 3/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/degrade to slower, not/)).toBeInTheDocument();
+
+    // Any later activity means the retry proceeded — the banner clears.
+    act(() => {
+      stream.emit(
+        "forge.iteration_completed",
+        {
+          forge_run_id: "forge_01LIVE",
+          iteration_number: 1,
+          eval_score: 0.8,
+          eval_delta: 0.8,
+          commit_shas: [],
+          applied: true,
+        },
+        "2",
+      );
+    });
+    expect(
+      screen.queryByText(/Backing off 32s/),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders a finished run's historical trajectory from the artifact", async () => {
     renderRoute("/forge/forge_01DONE");
     expect(await screen.findByText("iteration 2")).toBeInTheDocument();

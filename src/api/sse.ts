@@ -151,6 +151,7 @@ export const STUDIO_EVENT_NAMES: readonly string[] = [
   "llm.started",
   "llm.delta",
   "llm.completed",
+  "provider.retry",
   "tool.started",
   "tool.completed",
   "handoff",

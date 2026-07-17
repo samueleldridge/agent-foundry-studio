@@ -5,6 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  backoffFromEvents,
   iterationsFromEvents,
   iterationsFromTrajectory,
   mergeIterations,
@@ -99,6 +100,46 @@ describe("terminationFromEvents", () => {
   it("returns null while the run is still live", () => {
     expect(
       terminationFromEvents([ev("forge.iteration_started", { iteration_number: 1 })]),
+    ).toBeNull();
+  });
+});
+
+describe("backoffFromEvents", () => {
+  const retry = {
+    attempt: 3,
+    delay_s: 32,
+    error_class: "ProviderRateLimitError",
+    rate_limited: true,
+    retry_after_s: null,
+  };
+
+  it("reports the backoff while the latest frame is provider.retry", () => {
+    expect(
+      backoffFromEvents([
+        ev("forge.iteration_started", { iteration_number: 1 }),
+        ev("provider.retry", retry),
+      ]),
+    ).toEqual({
+      attempt: 3,
+      delayS: 32,
+      rateLimited: true,
+      errorClass: "ProviderRateLimitError",
+    });
+  });
+
+  it("clears once any later activity arrives (the retry proceeded)", () => {
+    expect(
+      backoffFromEvents([
+        ev("provider.retry", retry),
+        ev("llm.completed", { agent_name: "meta_agent" }),
+      ]),
+    ).toBeNull();
+  });
+
+  it("is null for an empty or retry-free stream", () => {
+    expect(backoffFromEvents([])).toBeNull();
+    expect(
+      backoffFromEvents([ev("forge.iteration_started", { iteration_number: 1 })]),
     ).toBeNull();
   });
 });

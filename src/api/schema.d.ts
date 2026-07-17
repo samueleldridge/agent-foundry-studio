@@ -1419,11 +1419,8 @@ export interface components {
              * @default 0.9
              */
             threshold: number;
-            /**
-             * Max Iter
-             * @default 5
-             */
-            max_iter: number;
+            /** Max Iter */
+            max_iter?: number | null;
             /** Max Cost Usd */
             max_cost_usd?: string | null;
             /** Model */
@@ -1634,6 +1631,11 @@ export interface components {
         ProjectCreateRequest: {
             /** Name */
             name: string;
+            /**
+             * Scaffold Eval
+             * @default true
+             */
+            scaffold_eval: boolean;
         };
         /** ProjectCreateResponse */
         ProjectCreateResponse: {
@@ -1643,6 +1645,12 @@ export interface components {
             branch: string;
             /** Project Dir */
             project_dir: string;
+            /** Eval Path */
+            eval_path?: string | null;
+            /** Eval Repo Path */
+            eval_repo_path?: string | null;
+            /** Files */
+            files?: string[];
         };
         /** ProjectDetail */
         ProjectDetail: {
@@ -1716,6 +1724,11 @@ export interface components {
              * @default
              */
             health_detail: string;
+            /**
+             * Bootstrap
+             * @default false
+             */
+            bootstrap: boolean;
         };
         /**
          * ProjectUnavailableInfo
@@ -1939,6 +1952,11 @@ export interface components {
              * @default 0
              */
             run_manager_pool: number;
+            /**
+             * Forge Max Iter Default
+             * @default 5
+             */
+            forge_max_iter_default: number;
         };
         /** TaskInfo */
         TaskInfo: {
@@ -2078,7 +2096,9 @@ export interface operations {
     };
     list_projects_api_projects_get: {
         parameters: {
-            query?: never;
+            query?: {
+                include_bootstrap?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2092,6 +2112,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProjectSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

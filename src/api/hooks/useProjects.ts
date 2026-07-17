@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost } from "../client";
+import { apiGet, apiPost, qs } from "../client";
 import type {
   ProjectCreateResponse,
   ProjectDetail,
@@ -7,10 +7,14 @@ import type {
   TaskLaunched,
 } from "../types";
 
-export function useProjects() {
+export function useProjects(options: { includeBootstrap?: boolean } = {}) {
+  const includeBootstrap = options.includeBootstrap ?? false;
   return useQuery({
-    queryKey: ["projects"],
-    queryFn: () => apiGet<ProjectSummary[]>("/api/projects"),
+    queryKey: ["projects", { includeBootstrap }],
+    queryFn: () =>
+      apiGet<ProjectSummary[]>(
+        `/api/projects${qs({ include_bootstrap: includeBootstrap || null })}`,
+      ),
   });
 }
 

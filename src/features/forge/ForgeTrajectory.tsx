@@ -4,7 +4,7 @@
  * score chart, commit list, sandbox-violation alerts, termination banner.
  */
 import { useMemo } from "react";
-import { OctagonAlertIcon } from "lucide-react";
+import { OctagonAlertIcon, TimerIcon } from "lucide-react";
 import type { SSEEvent } from "@/api/sse";
 import type { ForgeRunInfo } from "@/api/types";
 import { EventFeed } from "@/components/EventFeed";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCost, formatScore } from "@/lib/format";
 import {
+  backoffFromEvents,
   iterationsFromEvents,
   iterationsFromTrajectory,
   mergeIterations,
@@ -39,6 +40,7 @@ export function ForgeTrajectory({
     [info.trajectory, events],
   );
   const violations = useMemo(() => violationsFromEvents(events), [events]);
+  const backoff = backoffFromEvents(events);
   const termination = terminationFromEvents(events);
   const terminationReason = termination?.reason ?? info.termination_reason;
   const finalScore = termination?.finalScore ?? info.final_score;
@@ -61,6 +63,25 @@ export function ForgeTrajectory({
           </AlertDescription>
         </Alert>
       ))}
+
+      {backoff && (
+        <div
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-sm"
+          data-slot="forge-backoff"
+          role="status"
+        >
+          <TimerIcon className="size-4 shrink-0 text-warn" aria-hidden />
+          <span>
+            Backing off {backoff.delayS.toFixed(backoff.delayS < 1 ? 2 : 0)}s
+            {backoff.rateLimited ? " (rate limited)" : ""} — attempt{" "}
+            {backoff.attempt}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            The run continues; provider rate limits degrade to slower, not
+            failed.
+          </span>
+        </div>
+      )}
 
       {terminationReason && (
         <div

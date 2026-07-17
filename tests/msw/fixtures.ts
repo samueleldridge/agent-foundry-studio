@@ -35,6 +35,7 @@ export const projects: ProjectSummary[] = [
     last_eval_score: 1.0,
     healthy: true,
     health_detail: "config loads",
+    bootstrap: false,
   },
   {
     name: "team_hello",
@@ -46,8 +47,18 @@ export const projects: ProjectSummary[] = [
     last_eval_score: null,
     healthy: true,
     health_detail: "config loads",
+    bootstrap: false,
   },
 ];
+
+export const projectCreated = {
+  name: "qa_bot",
+  branch: "foundry/qa_bot",
+  project_dir: "/repo/projects/qa_bot",
+  eval_path: "evals/qa_bot.yaml",
+  eval_repo_path: "projects/qa_bot/evals/qa_bot.yaml",
+  files: ["README.md", "evals/qa_bot.yaml"],
+};
 
 export const projectDetail: ProjectDetail = {
   name: "hello",

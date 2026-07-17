@@ -14,11 +14,15 @@ export const handlers = [
       active_forge_runs: 0,
       active_chat_sessions: 0,
       run_manager_pool: 0,
+      forge_max_iter_default: 5,
     }),
   ),
 
   // Projects
   http.get("/api/projects", () => HttpResponse.json(fx.projects)),
+  http.post("/api/projects", () =>
+    HttpResponse.json(fx.projectCreated, { status: 201 }),
+  ),
   http.get("/api/projects/hello", () => HttpResponse.json(fx.projectDetail)),
   http.get("/api/projects/team_hello", () =>
     HttpResponse.json(fx.teamProjectDetail),

@@ -12,7 +12,7 @@ function eventVariant(
 ): "ok" | "fail" | "warn" | "secondary" | "muted" {
   if (name.endsWith(".failed") || name.includes("sandbox")) return "fail";
   if (name.endsWith(".completed")) return "ok";
-  if (name.startsWith("approval")) return "warn";
+  if (name.startsWith("approval") || name === "provider.retry") return "warn";
   if (name.startsWith("llm") || name.startsWith("tool")) return "secondary";
   return "muted";
 }
