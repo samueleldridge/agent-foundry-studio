@@ -62,9 +62,9 @@ function KeyStatusBadge({ status }: { status: ProviderKeyStatus }) {
   }
   if (status.source === "environment") {
     return (
-      <Badge variant="secondary">
+      <Badge variant="ok">
         <ShieldCheckIcon aria-hidden />
-        from environment
+        {`from environment · ${status.var_name}`}
       </Badge>
     );
   }
@@ -142,6 +142,12 @@ function KeyPanel({
           {provider.credentials_env}
         </Badge>
       </div>
+      {status?.source === "environment" && (
+        <p className="text-xs text-muted-foreground">
+          loaded from the backend process env — e.g. the repo's .env; manage it
+          there
+        </p>
+      )}
       <Label htmlFor={inputId} className="sr-only">
         {provider.label} API key
       </Label>
@@ -184,11 +190,6 @@ function KeyPanel({
           <Trash2Icon aria-hidden />
           Clear
         </Button>
-        {status?.source === "environment" && (
-          <span className="text-xs text-muted-foreground">
-            set by the backend environment — manage it there
-          </span>
-        )}
       </div>
       {verifyResult && <VerifyResult result={verifyResult} />}
     </div>

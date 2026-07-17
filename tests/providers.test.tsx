@@ -79,8 +79,17 @@ describe("providers panel", () => {
       screen.queryByRole("button", { name: "Save AWS Bedrock key" }),
     ).not.toBeInTheDocument();
 
-    // Key status: env-sourced vs unset.
-    expect(screen.getByText("from environment")).toBeInTheDocument();
+    // Key status: env-sourced vs unset. The env-sourced badge is a
+    // POSITIVE (ok/green) state naming the env var — never a muted one
+    // the operator could misread as "no key configured".
+    const envBadge = screen.getByText("from environment · ANTHROPIC_API_KEY");
+    expect(envBadge).toHaveClass("bg-ok/15", "text-ok");
+    expect(
+      screen.getByText(/loaded from the backend process env/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/e\.g\. the repo's \.env; manage it there/),
+    ).toBeInTheDocument();
     expect(screen.getByText("no key")).toBeInTheDocument();
   });
 
@@ -144,7 +153,7 @@ describe("providers panel", () => {
       screen.getByRole("button", { name: "Clear Anthropic key" }),
     ).toBeDisabled();
     expect(
-      screen.getByText(/set by the backend environment/),
+      screen.getByText(/loaded from the backend process env/),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Clear Voyage AI key" }));
