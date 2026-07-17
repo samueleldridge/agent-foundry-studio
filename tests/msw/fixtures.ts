@@ -539,12 +539,14 @@ export const teamProjectDetail: ProjectDetail = {
   system_version: "9f21ac04be7d3311",
 };
 
-/** rag_hello with its runtime secret missing — the backend detail carries
- * the `unavailable` block; run-shaped routes 424. */
-export const ragProjectDetail: ProjectDetail = {
+/** broken_creds — a purpose-built fixture project whose runtime secret is
+ * missing: the backend detail carries the `unavailable` block; run-shaped
+ * routes 424. (Deliberately NOT a real example project — rag_hello only
+ * needs OPENAI_API_KEY on the backend now.) */
+export const brokenCredsProjectDetail: ProjectDetail = {
   ...projectDetail,
-  name: "rag_hello",
-  description: "RAG example — retriever behind a cohere connection.",
+  name: "broken_creds",
+  description: "Fixture project — retriever behind a cohere connection.",
   flow_pattern: "single",
   system_version: "77aa88bb99ccddee",
   unavailable: {
@@ -559,10 +561,10 @@ export const ragProjectDetail: ProjectDetail = {
 export const projectUnavailableError = {
   error_class: "ProjectUnavailableError",
   message:
-    "project 'rag_hello' is unavailable: environment variable " +
+    "project 'broken_creds' is unavailable: environment variable " +
     "'COHERE_API_KEY' is not set",
   context: {
-    project: "rag_hello",
+    project: "broken_creds",
     env_vars: ["COHERE_API_KEY"],
     remedy:
       "set COHERE_API_KEY in the environment (e.g. the backend repo's " +
