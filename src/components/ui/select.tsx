@@ -5,6 +5,23 @@ import { cn } from "@/lib/utils";
 
 const Select = SelectPrimitive.Root;
 const SelectValue = SelectPrimitive.Value;
+const SelectGroup = SelectPrimitive.Group;
+
+function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+  return (
+    <SelectPrimitive.Label
+      data-slot="select-label"
+      className={cn(
+        "flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 function SelectTrigger({
   className,
@@ -57,13 +74,21 @@ function SelectContent({
 function SelectItem({
   className,
   children,
+  meta,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  /**
+   * Extra row content (chips, hints) rendered NEXT TO the item text but
+   * outside Radix's ItemText — so it never echoes into the closed
+   * trigger's value display.
+   */
+  meta?: React.ReactNode;
+}) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
@@ -74,8 +99,19 @@ function SelectItem({
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      {meta != null && (
+        <span className="ml-auto flex items-center gap-1">{meta}</span>
+      )}
     </SelectPrimitive.Item>
   );
 }
 
-export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };
+export {
+  Select,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectGroup,
+  SelectLabel,
+};

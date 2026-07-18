@@ -52,6 +52,12 @@ describe("forge console", () => {
       "make the greeting friendlier",
     );
     await user.type(screen.getByLabelText("Cost cap (USD, optional)"), "2.50");
+    // Model dropdown resolves its key-aware default before launch.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("combobox", { name: "Meta-agent model" }),
+      ).toHaveTextContent("claude-sonnet-4-5"),
+    );
     await user.click(screen.getByRole("button", { name: /Launch forge/ }));
 
     await waitFor(() =>
@@ -62,7 +68,9 @@ describe("forge console", () => {
         threshold: 0.9,
         max_iter: 5,
         max_cost_usd: "2.50",
-        model: null,
+        // Default selection: no openai key in the fixtures, so the first
+        // available (keyed) provider's first chat model is preselected.
+        model: "anthropic/claude-sonnet-4-5",
         no_improvement_after: 3,
       }),
     );

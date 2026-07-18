@@ -45,6 +45,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { ForgeRunInfo, ProjectCreateResponse } from "@/api/types";
 import { formatRelativeTime, formatScore } from "@/lib/format";
+import { ForgeModelField } from "./ModelSelect";
+import { useModelCatalog } from "./model-catalog";
 
 export function ForgeLaunchForm({
   defaultProject,
@@ -66,7 +68,18 @@ export function ForgeLaunchForm({
   const [threshold, setThreshold] = useState("0.9");
   const [maxIter, setMaxIter] = useState<string | null>(null);
   const [maxCost, setMaxCost] = useState("");
-  const [model, setModel] = useState("");
+
+  // Model selection: a key-aware grouped dropdown over the provider
+  // manifests, with an "Advanced" free-text escape hatch for unlisted
+  // models. Both paths submit the same "<provider>/<model>" string.
+  const catalog = useModelCatalog();
+  const [pickedModel, setPickedModel] = useState("");
+  const [customMode, setCustomMode] = useState(false);
+  const [customModel, setCustomModel] = useState("");
+  // Untouched selection falls back to the default binding (backend's
+  // meta default when its key is set, else first available model).
+  const selectedModel = pickedModel !== "" ? pickedModel : catalog.defaultBinding;
+  const launchBlocked = catalog.ready && !catalog.hasAnyKey;
 
   // The env-resolved global default (FOUNDRY_FORGE_MAX_ITER, else 5);
   // shown until the operator overrides it for this run.
@@ -83,6 +96,15 @@ export function ForgeLaunchForm({
       ? String(launch.error.envelope.context.forge_run_id ?? "")
       : null;
 
+  // Wire shape is unchanged: "<provider>/<model>" or null (backend default).
+  const modelForSubmit = customMode
+    ? customModel.trim() === ""
+      ? null
+      : customModel.trim()
+    : selectedModel === ""
+      ? null
+      : selectedModel;
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     launch.mutate(
@@ -93,7 +115,7 @@ export function ForgeLaunchForm({
         threshold: Number(threshold),
         max_iter: Number(maxIter ?? defaultMaxIter),
         max_cost_usd: maxCost.trim() === "" ? null : maxCost.trim(),
-        model: model.trim() === "" ? null : model.trim(),
+        model: modelForSubmit,
         no_improvement_after: 3,
       },
       {
@@ -185,17 +207,20 @@ export function ForgeLaunchForm({
               placeholder="5.00"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="forge-model">Meta-agent model (optional)</Label>
-            <Input
-              id="forge-model"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder="anthropic/claude-opus-4-7"
-            />
-          </div>
+          <ForgeModelField
+            catalog={catalog}
+            value={selectedModel}
+            onValueChange={setPickedModel}
+            customMode={customMode}
+            onCustomModeChange={setCustomMode}
+            customValue={customModel}
+            onCustomValueChange={setCustomModel}
+          />
           <div className="col-span-2">
-            <Button type="submit" disabled={launch.isPending || project === ""}>
+            <Button
+              type="submit"
+              disabled={launch.isPending || project === "" || launchBlocked}
+            >
               <RocketIcon aria-hidden />
               {launch.isPending ? "Launching…" : "Launch forge"}
             </Button>
