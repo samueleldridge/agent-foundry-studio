@@ -70,6 +70,14 @@ export const handlers = [
   http.get("/api/runs/:runId/artifact", () => HttpResponse.json(fx.runArtifact)),
   http.get("/api/approvals", () => HttpResponse.json([])),
 
+  // Eval assistant (docs/72 § Eval assistant)
+  http.post("/api/evals/assist/questions", () =>
+    HttpResponse.json(fx.assistQuestions),
+  ),
+  http.post("/api/evals/assist/draft", () =>
+    HttpResponse.json(fx.assistDraft),
+  ),
+
   // Evals
   http.get("/api/evals", () => HttpResponse.json(fx.evalRows)),
   http.get("/api/evals/:evalRunId", () => HttpResponse.json(fx.evalDetail)),

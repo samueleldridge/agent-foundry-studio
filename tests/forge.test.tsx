@@ -211,9 +211,13 @@ describe("forge console", () => {
     expect(screen.getByText("README.md")).toBeInTheDocument();
     expect(screen.getByText("evals/qa_bot.yaml")).toBeInTheDocument();
 
-    // Starter eval deep-links into the config editor.
+    // The AI eval wizard is the preferred path; hand-editing deep-links
+    // into the config editor.
     expect(
-      screen.getByRole("link", { name: /Open starter eval in the editor/ }),
+      screen.getByRole("button", { name: /Draft eval with AI/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Edit starter eval by hand/ }),
     ).toHaveAttribute(
       "href",
       "/projects/qa_bot/configs?file=evals%2Fqa_bot.yaml",

@@ -43,6 +43,16 @@ export type EvalRunRow = Schemas["EvalRunRow"];
 export type EvalLaunchRequest = Schemas["EvalLaunchRequest"];
 export type EvalCompareRequest = Schemas["EvalCompareRequest"];
 
+// --- Eval assistant (docs/72 § Eval assistant) --------------------------------
+export type EvalAssistQuestionsRequest = Schemas["EvalAssistQuestionsRequest"];
+export type EvalAssistQuestionsResponse =
+  Schemas["EvalAssistQuestionsResponse"];
+export type EvalAssistQuestion = Schemas["EvalAssistQuestion"];
+export type EvalAssistAnswer = Schemas["EvalAssistAnswer"];
+export type EvalAssistDraftRequest = Schemas["EvalAssistDraftRequest"];
+export type EvalAssistDraftResponse = Schemas["EvalAssistDraftResponse"];
+export type EvalAssistCase = Schemas["EvalAssistCase"];
+
 export type VersionsResponse = Schemas["VersionsResponse"];
 export type CommitModel = Schemas["CommitModel"];
 export type ArtifactVersions = Schemas["ArtifactVersions"];

@@ -10,6 +10,8 @@ import type {
   ChatSessionInfo,
   ConnectionInfo,
   DoctorReport,
+  EvalAssistDraftResponse,
+  EvalAssistQuestionsResponse,
   EvalRunRow,
   FileContent,
   FileTree,
@@ -742,3 +744,74 @@ export const providerKeys: ProviderKeyStatus[] = [
     last4: null,
   },
 ];
+
+// --- Eval assistant (docs/72 § Eval assistant) --------------------------------
+
+export const assistQuestions: EvalAssistQuestionsResponse = {
+  project: "hello",
+  model: "openai/gpt-5-mini",
+  questions: [
+    {
+      id: "input_shape",
+      question: "What fields does the agent's input carry?",
+      why: "Cases must match the input schema.",
+      suggested_answer: '{"name": "world"}',
+    },
+    {
+      id: "output_shape",
+      question: "What does a correct output look like?",
+      why: "Expected values are the scoring target.",
+      suggested_answer: '{"greeting": "Hello, world!"}',
+    },
+    {
+      id: "edge_cases",
+      question: "Which edge cases matter?",
+      why: "Edge cases keep the eval honest.",
+      suggested_answer: null,
+    },
+  ],
+};
+
+export const assistDraftYaml = `name: hello_assist_draft
+description: The greeting must address the caller by name.
+scope: project
+target: hello
+cases:
+  - id: plain_name
+    input: { name: "world" }
+    expected: { greeting: "Hello, world!" }
+  - id: unicode_name
+    input: { name: "Zoë" }
+    expected: { greeting: "Hello, Zoë!" }
+scorers:
+  - kind: exact
+    name: greeting_match
+    config: { field: greeting }
+threshold: 0.9
+deterministic: true
+seed: 42
+schema_version: 1
+`;
+
+export const assistDraft: EvalAssistDraftResponse = {
+  project: "hello",
+  model: "openai/gpt-5-mini",
+  yaml: assistDraftYaml,
+  validation: { ok: true, issues: [], kind: "eval" },
+  cases: [
+    {
+      id: "plain_name",
+      input: { name: "world" },
+      expected: { greeting: "Hello, world!" },
+      line: 6,
+    },
+    {
+      id: "unicode_name",
+      input: { name: "Zoë" },
+      expected: { greeting: "Hello, Zoë!" },
+      line: 9,
+    },
+  ],
+  suggested_path: "evals/hello.yaml",
+  notes: ["Check the unicode case's expected value."],
+};

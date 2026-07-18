@@ -5,10 +5,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { FlaskConicalIcon, PlayIcon } from "lucide-react";
+import { FlaskConicalIcon, PlayIcon, WandSparklesIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useEvals, useLaunchEval, useTask } from "@/api/hooks/useEvals";
 import type { EvalRunRow } from "@/api/types";
+import { EvalDraftWizard } from "./EvalDraftWizard";
 import { DataTable } from "@/components/DataTable";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
@@ -146,6 +147,7 @@ export function EvalsScreen() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useEvals(name);
   const [launchOpen, setLaunchOpen] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
 
   const columns = useMemo<ColumnDef<EvalRunRow, unknown>[]>(
     () => [
@@ -211,9 +213,14 @@ export function EvalsScreen() {
         title={`${name} · evals`}
         description="Eval runs for this project; click a row for per-case detail."
         actions={
-          <Button onClick={() => setLaunchOpen(true)}>
-            <PlayIcon aria-hidden /> Run eval
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setDraftOpen(true)}>
+              <WandSparklesIcon aria-hidden /> Draft with AI
+            </Button>
+            <Button onClick={() => setLaunchOpen(true)}>
+              <PlayIcon aria-hidden /> Run eval
+            </Button>
+          </div>
         }
       />
 
@@ -245,6 +252,11 @@ export function EvalsScreen() {
         project={name}
         open={launchOpen}
         onOpenChange={setLaunchOpen}
+      />
+      <EvalDraftWizard
+        project={name}
+        open={draftOpen}
+        onOpenChange={setDraftOpen}
       />
     </div>
   );

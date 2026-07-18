@@ -605,6 +605,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/evals/assist/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assist Questions */
+        post: operations["assist_questions_api_evals_assist_questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/evals/assist/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assist Draft */
+        post: operations["assist_draft_api_evals_assist_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{name}/versions": {
         parameters: {
             query?: never;
@@ -1356,6 +1390,100 @@ export interface components {
              * @default true
              */
             ok: boolean;
+        };
+        /** EvalAssistAnswer */
+        EvalAssistAnswer: {
+            /** Id */
+            id: string;
+            /** Answer */
+            answer: string;
+        };
+        /**
+         * EvalAssistCase
+         * @description One drafted case, pre-parsed for the review table.
+         */
+        EvalAssistCase: {
+            /** Id */
+            id: string;
+            /** Input */
+            input?: {
+                [key: string]: unknown;
+            };
+            /** Expected */
+            expected?: unknown;
+            /** Line */
+            line?: number | null;
+        };
+        /** EvalAssistDraftRequest */
+        EvalAssistDraftRequest: {
+            /** Project */
+            project: string;
+            /** Description */
+            description: string;
+            /** Answers */
+            answers?: components["schemas"]["EvalAssistAnswer"][];
+            /**
+             * Case Count
+             * @default 10
+             */
+            case_count: number;
+            /** Model */
+            model?: string | null;
+        };
+        /**
+         * EvalAssistDraftResponse
+         * @description The draft NEVER touches disk here: saving is the human's explicit
+         *     act through the config-write route (docs/72 § Eval assistant).
+         */
+        EvalAssistDraftResponse: {
+            /** Project */
+            project: string;
+            /** Model */
+            model: string;
+            /** Yaml */
+            yaml: string;
+            validation: components["schemas"]["ValidationResult"];
+            /** Cases */
+            cases?: components["schemas"]["EvalAssistCase"][];
+            /**
+             * Suggested Path
+             * @default
+             */
+            suggested_path: string;
+            /** Notes */
+            notes?: string[];
+        };
+        /** EvalAssistQuestion */
+        EvalAssistQuestion: {
+            /** Id */
+            id: string;
+            /** Question */
+            question: string;
+            /**
+             * Why
+             * @default
+             */
+            why: string;
+            /** Suggested Answer */
+            suggested_answer?: string | null;
+        };
+        /** EvalAssistQuestionsRequest */
+        EvalAssistQuestionsRequest: {
+            /** Project */
+            project: string;
+            /** Description */
+            description: string;
+            /** Model */
+            model?: string | null;
+        };
+        /** EvalAssistQuestionsResponse */
+        EvalAssistQuestionsResponse: {
+            /** Project */
+            project: string;
+            /** Model */
+            model: string;
+            /** Questions */
+            questions?: components["schemas"]["EvalAssistQuestion"][];
         };
         /** EvalCompareRequest */
         EvalCompareRequest: {
@@ -3528,6 +3656,72 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_questions_api_evals_assist_questions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvalAssistQuestionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalAssistQuestionsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_draft_api_evals_assist_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvalAssistDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalAssistDraftResponse"];
                 };
             };
             /** @description Validation Error */

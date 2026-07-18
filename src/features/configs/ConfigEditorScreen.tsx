@@ -94,7 +94,7 @@ function FileTreePanel({
   );
 }
 
-function IssuesPanel({ result }: { result: ValidationResult | null }) {
+export function IssuesPanel({ result }: { result: ValidationResult | null }) {
   if (result === null) return null;
   if (result.ok) {
     return (

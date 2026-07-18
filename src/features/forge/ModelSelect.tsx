@@ -31,6 +31,8 @@ export function ForgeModelField({
   onCustomModeChange,
   customValue,
   onCustomValueChange,
+  label = "Meta-agent model",
+  idPrefix = "forge-model",
 }: {
   catalog: ModelCatalog;
   /** Effective "<provider>/<model>" selection (may be the default). */
@@ -40,14 +42,17 @@ export function ForgeModelField({
   onCustomModeChange: (custom: boolean) => void;
   customValue: string;
   onCustomValueChange: (value: string) => void;
+  /** Reused outside the forge (eval assistant) with its own wording. */
+  label?: string;
+  idPrefix?: string;
 }) {
   const noKeys = catalog.ready && !catalog.hasAnyKey;
 
   return (
     <div className="space-y-1.5" data-slot="forge-model-field">
       <div className="flex items-center justify-between">
-        <Label htmlFor={customMode ? "forge-model-custom" : "forge-model"}>
-          Meta-agent model
+        <Label htmlFor={customMode ? `${idPrefix}-custom` : idPrefix}>
+          {label}
         </Label>
         <Button
           type="button"
@@ -63,7 +68,7 @@ export function ForgeModelField({
       {customMode ? (
         <>
           <Input
-            id="forge-model-custom"
+            id={`${idPrefix}-custom`}
             value={customValue}
             onChange={(e) => onCustomValueChange(e.target.value)}
             placeholder="provider/model (unlisted)"
@@ -76,7 +81,7 @@ export function ForgeModelField({
         </>
       ) : (
         <Select value={value} onValueChange={onValueChange}>
-          <SelectTrigger id="forge-model" aria-label="Meta-agent model">
+          <SelectTrigger id={idPrefix} aria-label={label}>
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>

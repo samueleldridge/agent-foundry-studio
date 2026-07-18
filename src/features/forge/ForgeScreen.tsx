@@ -16,6 +16,7 @@ import {
   FolderPlusIcon,
   HammerIcon,
   RocketIcon,
+  WandSparklesIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError } from "@/api/client";
@@ -44,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { ForgeRunInfo, ProjectCreateResponse } from "@/api/types";
+import { EvalDraftWizard } from "@/features/evals/EvalDraftWizard";
 import { formatRelativeTime, formatScore } from "@/lib/format";
 import { ForgeModelField } from "./ModelSelect";
 import { useModelCatalog } from "./model-catalog";
@@ -51,9 +53,12 @@ import { useModelCatalog } from "./model-catalog";
 export function ForgeLaunchForm({
   defaultProject,
   defaultEvalPath,
+  onDescriptionChange,
 }: {
   defaultProject?: string;
   defaultEvalPath?: string;
+  /** Lets the screen prefill the eval-assistant wizard from this form. */
+  onDescriptionChange?: (description: string) => void;
 }) {
   const navigate = useNavigate();
   // include_bootstrap: freshly-scaffolded projects (no system.yaml yet)
@@ -166,7 +171,10 @@ export function ForgeLaunchForm({
             <Textarea
               id="forge-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                onDescriptionChange?.(e.target.value);
+              }}
               placeholder="What should the meta-agent build or improve?"
               rows={2}
               required
@@ -252,8 +260,11 @@ function dirtyFilesFrom(error: unknown): string[] | null {
 
 export function NewProjectPanel({
   onCreated,
+  onDraftEval,
 }: {
   onCreated: (created: ProjectCreateResponse) => void;
+  /** Opens the AI eval wizard for the freshly-created project. */
+  onDraftEval?: (created: ProjectCreateResponse) => void;
 }) {
   const create = useCreateProject();
   const [name, setName] = useState("");
@@ -350,18 +361,27 @@ export function NewProjectPanel({
             {created.eval_path && (
               <>
                 <p className="text-xs text-muted-foreground">
-                  The starter eval is a template — fill in its TODO cases
+                  The starter eval is a template — replace its TODO cases
                   before launching; the forge optimises toward it and the
-                  meta-agent may not modify it.
+                  meta-agent may not modify it. Let the assistant draft the
+                  full set (you review and own every expected value), or
+                  fill it in by hand.
                 </p>
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    to={`/projects/${created.name}/configs?file=${encodeURIComponent(created.eval_path)}`}
-                  >
-                    <FilePenLineIcon aria-hidden /> Open starter eval in the
-                    editor
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {onDraftEval && (
+                    <Button size="sm" onClick={() => onDraftEval(created)}>
+                      <WandSparklesIcon aria-hidden /> Draft eval with AI
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" asChild>
+                    <Link
+                      to={`/projects/${created.name}/configs?file=${encodeURIComponent(created.eval_path)}`}
+                    >
+                      <FilePenLineIcon aria-hidden /> Edit starter eval by
+                      hand
+                    </Link>
+                  </Button>
+                </div>
               </>
             )}
           </div>
@@ -375,12 +395,18 @@ export function ForgeScreen() {
   const runs = useForgeRuns();
   const [mode, setMode] = useState<string>("existing");
   const [created, setCreated] = useState<ProjectCreateResponse | null>(null);
+  // The forge form's live description — prefills the eval wizard.
+  const [formDescription, setFormDescription] = useState("");
+  const [draftFor, setDraftFor] = useState<ProjectCreateResponse | null>(
+    null,
+  );
 
   const launchForm = (
     <ForgeLaunchForm
       key={created ? `created-${created.name}` : "blank"}
       defaultProject={created?.name}
       defaultEvalPath={created?.eval_repo_path ?? undefined}
+      onDescriptionChange={setFormDescription}
     />
   );
 
@@ -400,10 +426,22 @@ export function ForgeScreen() {
           {launchForm}
         </TabsContent>
         <TabsContent value="new" className="mt-3 space-y-4">
-          <NewProjectPanel onCreated={setCreated} />
+          <NewProjectPanel onCreated={setCreated} onDraftEval={setDraftFor} />
           {launchForm}
         </TabsContent>
       </Tabs>
+
+      {draftFor && (
+        <EvalDraftWizard
+          project={draftFor.name}
+          open={draftFor !== null}
+          onOpenChange={(open) => {
+            if (!open) setDraftFor(null);
+          }}
+          initialDescription={formDescription}
+          suggestedPath={draftFor.eval_path ?? undefined}
+        />
+      )}
 
       <Card>
         <CardHeader>

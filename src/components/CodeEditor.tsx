@@ -42,6 +42,9 @@ interface CodeEditorProps {
   issues?: ValidationIssue[];
   className?: string;
   "aria-label"?: string;
+  /** Jump-to-line request (1-based); a fresh object per click retriggers
+   * the scroll (eval-assistant review table → YAML). */
+  scrollTo?: { line: number } | null;
 }
 
 function languageExtension(language: EditorLanguage): Extension {
@@ -91,6 +94,7 @@ export function CodeEditor({
   issues = [],
   className,
   "aria-label": ariaLabel,
+  scrollTo = null,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -175,6 +179,20 @@ export function CodeEditor({
       setDiagnostics(view.state, issuesToDiagnostics(view.state, issues)),
     );
   }, [issues, value]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || !scrollTo) return;
+    const lineNumber = Math.min(
+      Math.max(scrollTo.line, 1),
+      view.state.doc.lines,
+    );
+    const pos = view.state.doc.line(lineNumber).from;
+    view.dispatch({
+      selection: { anchor: pos },
+      effects: EditorView.scrollIntoView(pos, { y: "center" }),
+    });
+  }, [scrollTo]);
 
   return <div ref={containerRef} className={className} data-slot="code-editor" />;
 }
