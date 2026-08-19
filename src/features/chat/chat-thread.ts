@@ -28,7 +28,10 @@ export type TurnStatus =
   | "max_hops"
   | "approval_pending"
   | "failed"
-  | "cancelled";
+  | "cancelled"
+  // Forward compatibility: an unrecognised run.completed status is
+  // preserved verbatim rather than collapsed to "success".
+  | (string & {});
 
 export interface ChatTurn {
   runId: string;
@@ -182,7 +185,9 @@ export function reduceThread(events: SSEEvent[]): ChatTurn[] {
           turn.status = "approval_pending";
           break;
         }
-        turn.status = status === "max_hops" ? "max_hops" : "success";
+        // Preserve the raw status — collapsing unknown terminal states
+        // (e.g. a future "budget_exceeded") to "success" would lie.
+        turn.status = status;
         const input = Number(d.total_input_tokens ?? 0);
         const output = Number(d.total_output_tokens ?? 0);
         turn.tokens = input + output;
@@ -229,8 +234,12 @@ export function reduceThread(events: SSEEvent[]): ChatTurn[] {
 export function userTextFromInputs(inputs: unknown): string {
   const rec = asRecord(inputs);
   const entries = Object.entries(rec).filter(([k]) => k !== "turns");
-  const strings = entries.filter(([, v]) => typeof v === "string");
-  if (strings.length === 1) return strings[0]![1] as string;
+  // Replay the bare string only for the single-field input shape — a
+  // multi-field input with one string member must render as the full
+  // object, not just that member.
+  if (entries.length === 1 && typeof entries[0]![1] === "string") {
+    return entries[0]![1];
+  }
   if (entries.length === 0) return "";
   return JSON.stringify(Object.fromEntries(entries), null, 2);
 }

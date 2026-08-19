@@ -133,9 +133,43 @@ export function ChatComposer({
       setDraft(
         filled ? JSON.stringify(input, null, 2) : templateFor(fields),
       );
+      setFormError(null);
+      setJsonMode(true);
+      return;
+    }
+    // JSON → form: carry the edits back into the per-field values. An
+    // unparsable draft keeps you in JSON mode with an inline error —
+    // "Back to form" must never silently discard edits.
+    if (draft.trim() !== "") {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(draft);
+      } catch {
+        setFormError(
+          "The JSON is invalid — fix it (or clear the box) before going back to the form.",
+        );
+        return;
+      }
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        setFormError(
+          "The JSON must be an object with the input fields — fix it before going back to the form.",
+        );
+        return;
+      }
+      const rec = parsed as Record<string, unknown>;
+      const next: Record<string, string> = {};
+      for (const field of fields) {
+        const v = rec[field.name];
+        if (v === undefined) continue;
+        next[field.name] =
+          field.type === "string" && typeof v === "string"
+            ? v
+            : JSON.stringify(v);
+      }
+      setValues(next);
     }
     setFormError(null);
-    setJsonMode((m) => !m);
+    setJsonMode(false);
   };
 
   // Send failure (e.g. raw-API-shaped validation): show the structured

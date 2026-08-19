@@ -98,6 +98,53 @@ describe("schema-aware chat composer", () => {
     ).toBeInTheDocument();
   });
 
+  it("carries JSON edits back into the form (Back to form never discards them)", async () => {
+    useTeamSessions();
+    const user = userEvent.setup();
+    renderRoute("/projects/team_hello/chat");
+
+    await screen.findByRole("textbox", { name: "request" });
+    await user.click(screen.getByRole("button", { name: "Edit as JSON" }));
+    const jsonBox = screen.getByRole("textbox", { name: "Chat message JSON" });
+    await user.clear(jsonBox);
+    await user.click(jsonBox);
+    await user.paste('{"request": "ship it", "audience": "everyone"}');
+
+    await user.click(screen.getByRole("button", { name: "Back to form" }));
+    // The JSON edits landed in the per-field inputs.
+    expect(screen.getByRole("textbox", { name: "request" })).toHaveValue(
+      "ship it",
+    );
+    expect(screen.getByRole("textbox", { name: "audience" })).toHaveValue(
+      "everyone",
+    );
+  });
+
+  it("refuses to leave JSON mode on invalid JSON, showing an inline error", async () => {
+    useTeamSessions();
+    const user = userEvent.setup();
+    renderRoute("/projects/team_hello/chat");
+
+    await screen.findByRole("textbox", { name: "request" });
+    await user.click(screen.getByRole("button", { name: "Edit as JSON" }));
+    const jsonBox = screen.getByRole("textbox", { name: "Chat message JSON" });
+    await user.clear(jsonBox);
+    await user.click(jsonBox);
+    await user.paste('{"request": "ship it", broken');
+
+    await user.click(screen.getByRole("button", { name: "Back to form" }));
+    // Still in JSON mode, edits intact, inline parse error shown.
+    expect(
+      screen.getByRole("textbox", { name: "Chat message JSON" }),
+    ).toHaveValue('{"request": "ship it", broken');
+    expect(
+      document.querySelector('[data-slot="composer-form-error"]'),
+    ).toHaveTextContent(/JSON is invalid/);
+    expect(
+      screen.queryByRole("textbox", { name: "request" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the plain message box for a single-required-field project, naming the field", async () => {
     renderRoute("/projects/hello/chat");
     const box = await screen.findByRole("textbox", { name: "Chat message" });

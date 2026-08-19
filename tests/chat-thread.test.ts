@@ -113,6 +113,15 @@ describe("reduceThread", () => {
     expect(turns[0]!.tokens).toBeNull();
   });
 
+  it("preserves an unrecognised run.completed status verbatim", () => {
+    const turns = reduceThread([
+      ev("run.started", { run_id: "r1" }),
+      ev("run.completed", { run_id: "r1", status: "budget_exceeded" }),
+    ]);
+    // Never collapsed to "success" — the raw status survives.
+    expect(turns[0]!.status).toBe("budget_exceeded");
+  });
+
   it("captures the structured error envelope from run.failed", () => {
     const turns = reduceThread([
       ev("run.started", { run_id: "r1" }),
@@ -139,6 +148,13 @@ describe("userTextFromInputs", () => {
   });
   it("falls back to pretty JSON for schema-shaped inputs", () => {
     expect(userTextFromInputs({ a: 1, b: 2 })).toContain('"a": 1');
+  });
+  it("renders a multi-field input with one string member as the full object", () => {
+    const text = userTextFromInputs({ request: "hi", count: 2 });
+    // The lone string must NOT be replayed bare — the other field would
+    // silently vanish from the transcript.
+    expect(text).toContain('"request": "hi"');
+    expect(text).toContain('"count": 2');
   });
   it("returns empty for no inputs", () => {
     expect(userTextFromInputs({})).toBe("");
