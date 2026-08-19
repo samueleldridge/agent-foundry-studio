@@ -196,12 +196,13 @@ export function reduceThread(events: SSEEvent[]): ChatTurn[] {
             ? null
             : Number(d.total_cost_estimate_usd);
         turn.durationMs = Number(d.duration_ms ?? 0);
-        // Non-streaming providers deliver the answer only here.
-        if (!turn.assistantText && d.final_output != null) {
-          turn.assistantText =
-            typeof d.final_output === "string"
-              ? d.final_output
-              : JSON.stringify(d.final_output, null, 2);
+        // The typed final_output is the authoritative answer. For streamed
+        // structured-output runs the accumulated deltas are the RAW JSON
+        // being generated token-by-token — always re-render from
+        // final_output so single-field outputs ({greeting: "..."}) show as
+        // prose, not serialized objects.
+        if (d.final_output != null) {
+          turn.assistantText = humaneOutputText(d.final_output);
         }
         break;
       }
@@ -231,8 +232,34 @@ export function reduceThread(events: SSEEvent[]): ChatTurn[] {
  * Derive the operator-visible text of a persisted run's input (reattach
  * path — the run.started frame carries only an inputs hash).
  */
+/**
+ * Operator-visible text for a typed run output: a bare string renders
+ * as-is; an object with exactly one string field (the common
+ * single-answer shape, e.g. {greeting}) renders that string; anything
+ * richer renders as pretty-printed JSON.
+ */
+export function humaneOutputText(output: unknown): string {
+  if (typeof output === "string") return output;
+  const rec = asRecord(output);
+  const entries = Object.entries(rec);
+  if (entries.length === 1 && typeof entries[0]![1] === "string") {
+    return entries[0]![1];
+  }
+  return JSON.stringify(output, null, 2);
+}
+
 export function userTextFromInputs(inputs: unknown): string {
-  const rec = asRecord(inputs);
+  let rec = asRecord(inputs);
+  // Defensive unwrap: older artifact payloads carried the docs/81
+  // {"inputs": {...}} envelope verbatim.
+  if (
+    Object.keys(rec).length === 1 &&
+    "inputs" in rec &&
+    typeof rec.inputs === "object" &&
+    rec.inputs !== null
+  ) {
+    rec = asRecord(rec.inputs);
+  }
   const entries = Object.entries(rec).filter(([k]) => k !== "turns");
   // Replay the bare string only for the single-field input shape — a
   // multi-field input with one string member must render as the full

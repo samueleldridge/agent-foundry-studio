@@ -3,7 +3,11 @@
  * message = one run).
  */
 import { describe, expect, it } from "vitest";
-import { reduceThread, userTextFromInputs } from "@/features/chat/chat-thread";
+import {
+  humaneOutputText,
+  reduceThread,
+  userTextFromInputs,
+} from "@/features/chat/chat-thread";
 import type { SSEEvent } from "@/api/sse";
 
 function ev(event: string, data: Record<string, unknown>, id = "0"): SSEEvent {
@@ -34,6 +38,28 @@ describe("reduceThread", () => {
       costUsd: 0.0021,
       durationMs: 950,
     });
+  });
+
+  it("re-renders streamed raw-JSON deltas from the typed final_output", () => {
+    // Structured-output runs stream the JSON itself ({"greeting":"...})
+    // token-by-token; the finished turn must show prose, not the wire text.
+    const turns = reduceThread([
+      ev("run.started", { run_id: "r1" }),
+      ev("llm.delta", {
+        run_id: "r1",
+        delta: { type: "text", text: '{"greeting":"Hi ' },
+      }),
+      ev("llm.delta", {
+        run_id: "r1",
+        delta: { type: "text", text: 'there!"}' },
+      }),
+      ev("run.completed", {
+        run_id: "r1",
+        status: "success",
+        final_output: { greeting: "Hi there!" },
+      }),
+    ]);
+    expect(turns[0]!.assistantText).toBe("Hi there!");
   });
 
   it("keeps runs separate (each message = one run) in stream order", () => {
@@ -159,5 +185,27 @@ describe("userTextFromInputs", () => {
   it("returns empty for no inputs", () => {
     expect(userTextFromInputs({})).toBe("");
     expect(userTextFromInputs(null)).toBe("");
+  });
+});
+
+describe("humaneOutputText", () => {
+  it("renders single-string-field outputs as prose", () => {
+    expect(humaneOutputText({ greeting: "Hi!" })).toBe("Hi!");
+    expect(humaneOutputText("plain")).toBe("plain");
+  });
+  it("pretty-prints richer outputs", () => {
+    const text = humaneOutputText({ answer: "42", citations: ["a"] });
+    expect(text).toContain('"answer": "42"');
+  });
+});
+
+describe("userTextFromInputs artifact envelope", () => {
+  it("unwraps the docs/81 {inputs: {...}} wrapper", () => {
+    expect(userTextFromInputs({ inputs: { name: "hello there" } })).toBe(
+      "hello there",
+    );
+  });
+  it("does not unwrap a real single input field named inputs-like shape", () => {
+    expect(userTextFromInputs({ name: "hi" })).toBe("hi");
   });
 });
