@@ -53,6 +53,9 @@ function usePersistedDashboards() {
   const save = useSaveLayouts();
   const [doc, setDoc] = useState<DashboardsDoc | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The doc awaiting the debounced save — flushed on unmount so a quick
+  // navigation away never drops the last edit.
+  const pending = useRef<DashboardsDoc | null>(null);
   // TanStack Query guarantees `mutate` is a stable reference.
   const saveMutate = save.mutate;
 
@@ -67,8 +70,13 @@ function usePersistedDashboards() {
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
+      // Flush, don't drop: persist the still-debounced edit on unmount.
+      if (pending.current) {
+        saveMutate(pending.current as unknown as LayoutsDocument);
+        pending.current = null;
+      }
     },
-    [],
+    [saveMutate],
   );
 
   const update = useCallback(
@@ -76,7 +84,9 @@ function usePersistedDashboards() {
       setDoc((prev) => {
         if (next === prev) return prev;
         if (timer.current) clearTimeout(timer.current);
+        pending.current = next;
         timer.current = setTimeout(() => {
+          pending.current = null;
           saveMutate(next as unknown as LayoutsDocument);
         }, SAVE_DEBOUNCE_MS);
         return next;

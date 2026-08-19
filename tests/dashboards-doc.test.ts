@@ -63,6 +63,32 @@ describe("coerceDoc", () => {
     const doc = coerceDoc({ ...savedDoc, active: "gone" });
     expect(doc.active).toBe("ops");
   });
+
+  it("never lets NaN/Infinity into layout coordinates", () => {
+    const doc = coerceDoc({
+      version: Number.NaN,
+      active: "ops",
+      dashboards: {
+        ops: {
+          widgets: [
+            {
+              id: "w1",
+              widget: "cost-chart",
+              config: {},
+              layout: { x: "garbage", y: Number.NaN, w: Infinity, h: "junk" },
+            },
+          ],
+        },
+      },
+    } as unknown as LayoutsDocument);
+    expect(doc.version).toBe(1);
+    expect(doc.dashboards.ops!.widgets[0]!.layout).toEqual({
+      x: 0,
+      y: 0,
+      w: 4,
+      h: 3,
+    });
+  });
 });
 
 describe("board mutations", () => {

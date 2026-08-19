@@ -115,6 +115,24 @@ describe("dashboard", () => {
     });
   });
 
+  it("flushes the still-debounced layout save on unmount (edit is never dropped)", async () => {
+    const puts = capturePut();
+    const user = userEvent.setup();
+    const { unmount } = renderRoute("/");
+    await screen.findByText("Project health");
+
+    await user.click(
+      screen.getByRole("button", { name: "Remove Project health" }),
+    );
+    // Unmount before the 800ms debounce fires — the pending save must be
+    // flushed in cleanup, not dropped.
+    expect(puts).toHaveLength(0);
+    unmount();
+    await waitFor(() => expect(puts.length).toBeGreaterThanOrEqual(1));
+    const widgets = puts.at(-1)!.dashboards.default!.widgets;
+    expect(widgets.some((w) => w.widget === "project-health")).toBe(false);
+  });
+
   it("removes a widget and persists the removal", async () => {
     const puts = capturePut();
     const user = userEvent.setup();

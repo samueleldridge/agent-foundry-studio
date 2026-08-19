@@ -15,6 +15,13 @@ function asRecord(v: unknown): Rec | null {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Rec) : null;
 }
 
+/** Finite number or the fallback — NaN/Infinity from a hand-edited or
+ * corrupted server document must never enter layout coordinates. */
+function finite(v: unknown, fallback: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function coerceInstance(raw: unknown): WidgetInstance | null {
   const rec = asRecord(raw);
   if (!rec || typeof rec.id !== "string" || typeof rec.widget !== "string") {
@@ -31,10 +38,10 @@ function coerceInstance(raw: unknown): WidgetInstance | null {
       Object.entries(config).filter(([, v]) => typeof v === "string"),
     ) as Record<string, string>,
     layout: {
-      x: Number(layout.x ?? 0),
-      y: Number(layout.y ?? 0),
-      w: Math.max(1, Number(layout.w ?? 4)),
-      h: Math.max(1, Number(layout.h ?? 3)),
+      x: finite(layout.x, 0),
+      y: finite(layout.y, 0),
+      w: Math.max(1, finite(layout.w, 4)),
+      h: Math.max(1, finite(layout.h, 3)),
     },
   };
 }
@@ -62,7 +69,7 @@ export function coerceDoc(raw: LayoutsDocument | null | undefined): DashboardsDo
     typeof raw.active === "string" && raw.active in dashboards
       ? raw.active
       : Object.keys(dashboards)[0]!;
-  return { version: Number(raw.version ?? 1) || 1, active, dashboards };
+  return { version: finite(raw.version, 1) || 1, active, dashboards };
 }
 
 let counter = 0;
