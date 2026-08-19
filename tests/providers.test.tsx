@@ -63,7 +63,8 @@ describe("providers panel", () => {
     expect(within(row).getByText("200,000")).toBeInTheDocument();
     expect(within(row).getByText("64,000")).toBeInTheDocument();
     expect(within(row).getByText("extended_thinking")).toBeInTheDocument();
-    expect(within(row).getByText(/\$3 in · \$15 out/)).toBeInTheDocument();
+    // Normalised currency: always ≥2 decimals ($3.00, not $3).
+    expect(within(row).getByText(/\$3\.00 in · \$15\.00 out/)).toBeInTheDocument();
     expect(within(row).getByText("reasoning")).toBeInTheDocument();
 
     // Embedder card with the embedding-model table.

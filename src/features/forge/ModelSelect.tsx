@@ -47,6 +47,8 @@ export function ForgeModelField({
   idPrefix?: string;
 }) {
   const noKeys = catalog.ready && !catalog.hasAnyKey;
+  const someUnkeyed =
+    catalog.ready && catalog.hasAnyKey && catalog.groups.some((g) => !g.keyed);
 
   return (
     <div className="space-y-1.5" data-slot="forge-model-field">
@@ -140,6 +142,21 @@ export function ForgeModelField({
             ))}
           </SelectContent>
         </Select>
+      )}
+
+      {/* Keyboard-reachable twin of the in-popup "no key" affix: links
+          inside Radix SelectLabel are unreachable without a pointer. */}
+      {someUnkeyed && !customMode && (
+        <p className="text-xs text-muted-foreground" data-slot="unkeyed-copy">
+          Greyed-out providers have no API key —{" "}
+          <Link
+            to="/providers"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            add one in Providers
+          </Link>{" "}
+          to enable them.
+        </p>
       )}
 
       {noKeys && (

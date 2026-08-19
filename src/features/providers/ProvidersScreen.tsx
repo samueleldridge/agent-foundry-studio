@@ -29,6 +29,7 @@ import type {
   ProviderKeyStatus,
   ProviderKeyVerifyResult,
 } from "@/api/types";
+import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +48,13 @@ import {
 } from "@/components/ui/table";
 import { formatTokens } from "@/lib/format";
 
+/** Currency with at least two decimals ($2.50, not $2.5), keeping extra
+ * precision for sub-cent rates ($0.075). */
 function usd(perMillion: number): string {
-  return `$${perMillion}`;
+  return `$${perMillion.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  })}`;
 }
 
 function KeyStatusBadge({ status }: { status: ProviderKeyStatus }) {
@@ -354,6 +360,12 @@ export function ProvidersScreen() {
           <Skeleton className="h-56 w-full" />
           <Skeleton className="h-56 w-full" />
         </div>
+      ) : (providers ?? []).length === 0 ? (
+        <EmptyState
+          icon={CpuIcon}
+          title="No providers registered"
+          description="The backend reported no provider adapters — check the control plane's provider manifest."
+        />
       ) : (
         <div className="space-y-4">
           {(providers ?? []).map((provider) => (
