@@ -1,6 +1,7 @@
 /**
  * App shell — sidebar nav, project switcher, theme toggle.
  */
+import { Suspense } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import {
   ActivityIcon,
@@ -34,6 +35,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
 import { useTheme } from "@/theme/ThemeProvider";
 import { cn } from "@/lib/utils";
@@ -204,7 +206,17 @@ export default function App() {
 
       <main className="min-w-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-6 py-6">
-          <Outlet />
+          {/* Route-level code splitting: heavy screens load lazily. */}
+          <Suspense
+            fallback={
+              <div className="space-y-4" data-slot="route-loading">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-96 w-full" />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 

@@ -2,31 +2,36 @@
  * Route table per docs/72 § Routing map — complete as of Phase 10c:
  * widget dashboard at "/", per-project chat + flow graph, forge console,
  * cross-project approvals inbox.
+ *
+ * Heavy screens come from ./lazy-screens (route-level code splitting);
+ * light screens stay eager.
  */
 import { createBrowserRouter, type RouteObject } from "react-router";
 import App from "./App";
-import { DashboardScreen } from "./dashboard/DashboardScreen";
 import { ProjectsList } from "./features/projects/ProjectsList";
 import { ProjectOverview } from "./features/projects/ProjectOverview";
-import { ConfigEditorScreen } from "./features/configs/ConfigEditorScreen";
-import { CatalogScreen } from "./features/catalog/CatalogScreen";
 import { DoctorScreen } from "./features/doctor/DoctorScreen";
-import { ObsScreen } from "./features/obs/ObsScreen";
 import { RunsScreen } from "./features/runs/RunsScreen";
 import { RunDetailScreen } from "./features/runs/RunDetailScreen";
-import { EvalsScreen } from "./features/evals/EvalsScreen";
-import { EvalDetailScreen } from "./features/evals/EvalDetailScreen";
-import { VersionsScreen } from "./features/versions/VersionsScreen";
 import { ConnectionsScreen } from "./features/connections/ConnectionsScreen";
 import { StorageScreen } from "./features/storage/StorageScreen";
 import { ProvidersScreen } from "./features/providers/ProvidersScreen";
 import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { ChatScreen } from "./features/chat/ChatScreen";
-import { GraphScreen } from "./features/graph/GraphScreen";
-import { ForgeScreen } from "./features/forge/ForgeScreen";
-import { ForgeRunDetail } from "./features/forge/ForgeRunDetail";
 import { ApprovalsScreen } from "./features/approvals/ApprovalsScreen";
 import { EmptyState } from "./components/EmptyState";
+import {
+  CatalogScreen,
+  ConfigEditorScreen,
+  DashboardScreen,
+  EvalDetailScreen,
+  EvalsScreen,
+  ForgeRunDetail,
+  ForgeScreen,
+  GraphScreen,
+  ObsScreen,
+  VersionsScreen,
+} from "./lazy-screens";
 
 export const routes: RouteObject[] = [
   {
