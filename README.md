@@ -9,6 +9,10 @@ The web console for [agent-foundry](https://github.com/samueleldridge/agent-foun
 
 This repo is intentionally **separate** from the framework repo: it has its own git history, and `agent-foundry` never contains Node artifacts. The backend control-plane API (`foundry.studio`) lives there and serves this app's built assets.
 
+![Multi-agent flow graph — supervisor + workers, compiled from config](docs/assets/studio-graph.png)
+
+![Chat — streamed runs, tool activity chips, per-run cost](docs/assets/studio-chat.png)
+
 ```mermaid
 flowchart LR
   B["Browser SPA<br/>React 19 · TanStack Query"] -->|"REST + SSE /api/*"| CP["foundry.studio<br/>control plane (FastAPI)"]
