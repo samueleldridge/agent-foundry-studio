@@ -2284,6 +2284,11 @@ export interface components {
              * @default 5
              */
             forge_max_iter_default: number;
+            /**
+             * Current Branch
+             * @default
+             */
+            current_branch: string;
         };
         /** TaskInfo */
         TaskInfo: {
