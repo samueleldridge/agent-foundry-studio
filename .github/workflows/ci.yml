@@ -60,6 +60,10 @@ jobs:
         if: steps.backend.outcome == 'success'
         with:
           python-version: "3.12"
+          # The backend lives in a subdirectory checkout here; setup-uv's
+          # post-job cache pruning fails against that layout. No cache — this
+          # optional drift-check job doesn't need one.
+          enable-cache: false
       - run: npm ci
         if: steps.backend.outcome == 'success'
       - name: Boot the control plane (API only)
