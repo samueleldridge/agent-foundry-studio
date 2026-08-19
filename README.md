@@ -2,12 +2,14 @@
 
 The web frontend for [agent-foundry](../agent-foundry) — a React app over every foundry CLI feature: projects, config editing with server-side validation, catalog exploration, doctor, observability dashboards, evals, versions/rollback, runs, connections, and storage. Phase 10c adds chat (with in-chat HITL approvals), the multi-agent flow graph, the live forge console, and widget dashboards.
 
-This repo is intentionally **separate** from the framework repo: it has its own git history, and `agent-foundry` never contains Node artifacts. The backend control-plane API (`foundry.studio`) lives in the framework repo and serves this app's built assets.
+This repo is intentionally **separate** from the framework repo: it has its own git history, and `agent-foundry` never contains Node artifacts. The backend control-plane API (`foundry.studio`) lives in the framework repo — which is a separate repository and may not be public (yet) — and serves this app's built assets.
+
+> **No backend? No problem.** `npm install && npm test` runs the full suite completely offline: every API is mocked with [msw](https://mswjs.io/) and SSE streams ride a shared EventSource mock — no backend process, no API keys, no network. Lint, typecheck, and build are equally standalone; only `npm run dev` and `npm run generate:api` need the real control plane.
 
 ## Prerequisites
 
 - Node ≥ 22 (developed on v26) + npm
-- A checkout of `agent-foundry` as a **sibling directory** (`../agent-foundry`), with its Python env set up (`uv sync`)
+- *For live development against a real backend only:* a checkout of `agent-foundry` as a **sibling directory** (`../agent-foundry`), with its Python env set up (`uv sync`)
 
 ## Development
 

@@ -312,14 +312,14 @@ export const versions: VersionsResponse = {
     {
       sha: "0422182068527e9fc4868217525a3940fddb87ed",
       short_sha: "04221820",
-      author: "Sam",
+      author: "operator",
       date: "2026-07-13T23:20:56+01:00",
       subject: "revert(examples): restore anthropic default",
     },
     {
       sha: "aeda1505de28ce0bc82351d12203821986be82d2",
       short_sha: "aeda1505",
-      author: "Sam",
+      author: "operator",
       date: "2026-07-13T22:48:39+01:00",
       subject: "chore(examples): point hello at local models",
     },
@@ -396,7 +396,7 @@ export const connectionHealth = {
 };
 
 export const storageStats: StorageStats = {
-  foundry_home: "/Users/sam/.foundry",
+  foundry_home: "/home/user/.foundry",
   kinds: [
     { kind: "runs", items: 8, bytes: 4601088 },
     { kind: "archives", items: 0, bytes: 0 },

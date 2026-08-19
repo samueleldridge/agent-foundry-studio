@@ -46,7 +46,12 @@ export function buildSSEUrl(
 ): string {
   const u = new URL(url, window.location.origin);
   if (lastEventId !== null) u.searchParams.set("from_sequence", lastEventId);
-  // EventSource cannot set headers; the control plane accepts ?token=.
+  // SECURITY tradeoff: EventSource cannot set an Authorization header, so
+  // the bearer token rides in the query string (?token=). Query strings
+  // can be captured by access logs, proxies, and browser history. This is
+  // acceptable for the localhost-by-default studio control plane; if the
+  // studio is ever exposed beyond localhost, front it with TLS and prefer
+  // cookie- or header-based auth via a proxy that upgrades the stream.
   if (token) u.searchParams.set("token", token);
   return u.pathname + u.search;
 }
