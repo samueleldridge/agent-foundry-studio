@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "./msw/server";
-import { ApiError, apiGet, qs } from "@/api/client";
+import { ApiError, apiGet, encodePath, qs } from "@/api/client";
+import { fetchBaseHash } from "@/api/hooks/useEvalAssist";
+import { agentYaml } from "./msw/fixtures";
 
 describe("api client", () => {
   it("decodes the FoundryError envelope on non-2xx responses", async () => {
@@ -54,5 +56,49 @@ describe("api client", () => {
       "?project=hello",
     );
     expect(qs({})).toBe("");
+  });
+
+  it("encodePath escapes per segment, keeping the slashes", () => {
+    expect(encodePath("evals/hello.yaml")).toBe("evals/hello.yaml");
+    // encodeURI would leave # and ? intact and truncate the request path.
+    expect(encodePath("evals/a#1 draft?.yaml")).toBe(
+      "evals/a%231%20draft%3F.yaml",
+    );
+  });
+});
+
+describe("fetchBaseHash", () => {
+  it("returns the server hash when the file exists", async () => {
+    await expect(fetchBaseHash("hello", "evals/hello.yaml")).resolves.toBe(
+      agentYaml.content_hash,
+    );
+  });
+
+  it("maps a 404 (fresh save) to a null base hash", async () => {
+    server.use(
+      http.get("/api/projects/hello/files/*", () =>
+        HttpResponse.json(
+          { error_class: "FileNotFound", message: "no such file", context: {} },
+          { status: 404 },
+        ),
+      ),
+    );
+    await expect(
+      fetchBaseHash("hello", "evals/new.yaml"),
+    ).resolves.toBeNull();
+  });
+
+  it("rethrows non-404 failures instead of faking a fresh save", async () => {
+    server.use(
+      http.get("/api/projects/hello/files/*", () =>
+        HttpResponse.json(
+          { error_class: "StorageError", message: "disk on fire", context: {} },
+          { status: 500 },
+        ),
+      ),
+    );
+    await expect(fetchBaseHash("hello", "evals/hello.yaml")).rejects.toThrow(
+      "disk on fire",
+    );
   });
 });

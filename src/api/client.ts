@@ -125,6 +125,15 @@ export function apiDelete<T>(path: string, body?: unknown): Promise<T> {
   return request<T>("DELETE", path, body);
 }
 
+/**
+ * Encode a repo-relative file path for a URL, segment by segment.
+ * (encodeURI leaves ?, #, % and friends alone — a path like
+ * "evals/a#1.yaml" would silently truncate the request path.)
+ */
+export function encodePath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
+
 /** Build a query string, skipping null/undefined/empty values. */
 export function qs(
   params: Record<string, string | number | boolean | null | undefined>,

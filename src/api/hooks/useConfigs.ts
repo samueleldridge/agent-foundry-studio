@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiPut } from "../client";
+import { apiGet, apiPost, apiPut, encodePath } from "../client";
 import type {
   FileContent,
   FileTree,
@@ -18,7 +18,7 @@ export function useFileContent(project: string, path: string | null) {
     queryKey: ["projects", project, "files", path],
     queryFn: () =>
       apiGet<FileContent>(
-        `/api/projects/${project}/files/${encodeURI(path ?? "")}`,
+        `/api/projects/${project}/files/${encodePath(path ?? "")}`,
       ),
     enabled: path !== null,
   });
@@ -47,7 +47,7 @@ export function useSaveFile(project: string) {
       base_hash: string | null;
     }) =>
       apiPut<WriteResult>(
-        `/api/projects/${project}/files/${encodeURI(args.path)}`,
+        `/api/projects/${project}/files/${encodePath(args.path)}`,
         { content: args.content, base_hash: args.base_hash },
       ),
     onSuccess: (_data, args) => {

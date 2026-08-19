@@ -220,7 +220,17 @@ export function EvalDraftWizard({
 
   const doSave = () => {
     void (async () => {
-      const baseHash = await fetchBaseHash(project, savePath);
+      // fetchBaseHash rethrows non-404 failures (auth/network/5xx) so a
+      // broken lookup can't masquerade as a fresh save.
+      let baseHash: string | null;
+      try {
+        baseHash = await fetchBaseHash(project, savePath);
+      } catch (err) {
+        toast.error(
+          `Save failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        return;
+      }
       save.mutate(
         { path: savePath, content: yamlText, base_hash: baseHash },
         {

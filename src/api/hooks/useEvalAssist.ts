@@ -5,7 +5,7 @@
  * through the existing config-write route (useSaveFile).
  */
 import { useMutation } from "@tanstack/react-query";
-import { apiGet, apiPost } from "../client";
+import { ApiError, apiGet, apiPost, encodePath } from "../client";
 import type {
   EvalAssistDraftRequest,
   EvalAssistDraftResponse,
@@ -43,10 +43,14 @@ export async function fetchBaseHash(
 ): Promise<string | null> {
   try {
     const file = await apiGet<FileContent>(
-      `/api/projects/${project}/files/${encodeURI(path)}`,
+      `/api/projects/${project}/files/${encodePath(path)}`,
     );
     return file.content_hash;
-  } catch {
-    return null;
+  } catch (err) {
+    // Only "file doesn't exist yet" maps to a fresh-save null base_hash.
+    // Anything else (auth failure, network, 500) must surface — treating
+    // it as a fresh save would defeat the concurrent-edit guard.
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
   }
 }
