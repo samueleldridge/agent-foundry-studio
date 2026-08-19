@@ -10,7 +10,7 @@
  * existing config-write route (validate → commit) — the human owns the
  * expected values. "Regenerate" re-drafts with tweaked answers.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
   RefreshCwIcon,
@@ -46,6 +46,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type Step = "describe" | "questions" | "review";
+
+const VALIDATE_DEBOUNCE_MS = 300;
+const CASE_COUNT_MIN = 1;
+const CASE_COUNT_MAX = 50;
+const CASE_COUNT_DEFAULT = 10;
+
+/** Typed case counts are clamped to the wizard's bounds. */
+function clampCaseCount(raw: string): number {
+  const n = Math.round(Number(raw));
+  if (!Number.isFinite(n)) return CASE_COUNT_DEFAULT;
+  return Math.min(CASE_COUNT_MAX, Math.max(CASE_COUNT_MIN, n));
+}
 
 function compact(value: unknown): string {
   const text = JSON.stringify(value);
@@ -163,7 +175,7 @@ export function EvalDraftWizard({
         project,
         description,
         model: modelForSubmit,
-        case_count: Number(caseCount) || 10,
+        case_count: clampCaseCount(caseCount),
         answers: questions
           .map((q) => ({ id: q.id, answer: (answers[q.id] ?? "").trim() }))
           .filter((a) => a.answer !== ""),
@@ -179,12 +191,31 @@ export function EvalDraftWizard({
     );
   };
 
+  // Debounced server validation with a monotonic sequence guard: a burst
+  // of keystrokes fires one request, and a slow response for an older
+  // edit can never overwrite the verdict for a newer one.
+  const validateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const validateSeq = useRef(0);
+  useEffect(
+    () => () => {
+      if (validateTimer.current) clearTimeout(validateTimer.current);
+    },
+    [],
+  );
   const revalidate = (content: string) => {
     setYamlText(content);
-    validate.mutate(
-      { path: savePath, content },
-      { onSuccess: (result) => setValidation(result) },
-    );
+    if (validateTimer.current) clearTimeout(validateTimer.current);
+    validateTimer.current = setTimeout(() => {
+      const seq = ++validateSeq.current;
+      validate.mutate(
+        { path: savePath, content },
+        {
+          onSuccess: (result) => {
+            if (seq === validateSeq.current) setValidation(result);
+          },
+        },
+      );
+    }, VALIDATE_DEBOUNCE_MS);
   };
 
   const doSave = () => {
@@ -304,10 +335,11 @@ export function EvalDraftWizard({
                 <Input
                   id="assist-case-count"
                   type="number"
-                  min="1"
-                  max="50"
+                  min={CASE_COUNT_MIN}
+                  max={CASE_COUNT_MAX}
                   value={caseCount}
                   onChange={(e) => setCaseCount(e.target.value)}
+                  onBlur={() => setCaseCount(String(clampCaseCount(caseCount)))}
                 />
               </div>
               <Button onClick={runDraft} disabled={draftMutation.isPending}>

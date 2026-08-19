@@ -233,6 +233,123 @@ describe("eval draft wizard", () => {
     ).toBeInTheDocument();
   });
 
+  it("starts fresh on every open — closing discards wizard state", async () => {
+    const user = userEvent.setup();
+    renderRoute("/projects/hello/evals");
+    await user.click(
+      await screen.findByRole("button", { name: /Draft with AI/ }),
+    );
+    await user.type(
+      await screen.findByLabelText("What must the agent do?"),
+      "Greet the caller by name.",
+    );
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        screen.queryByLabelText("What must the agent do?"),
+      ).not.toBeInTheDocument(),
+    );
+
+    // Reopen: the describe step is blank, not the stale prior session.
+    await user.click(screen.getByRole("button", { name: /Draft with AI/ }));
+    expect(await screen.findByLabelText("What must the agent do?")).toHaveValue(
+      "",
+    );
+  });
+
+  it("debounces editor validation to one request per typing burst", async () => {
+    const user = userEvent.setup();
+    let validateCalls = 0;
+    server.use(
+      http.post("/api/projects/hello/validate", () => {
+        validateCalls += 1;
+        return HttpResponse.json(assistDraft.validation);
+      }),
+    );
+
+    await walkToReview(user);
+    await user.type(screen.getByLabelText("Drafted eval YAML"), "abcdef");
+    await waitFor(() => expect(validateCalls).toBeGreaterThanOrEqual(1));
+    // One burst of keystrokes → exactly one validation round-trip.
+    await new Promise((r) => setTimeout(r, 400));
+    expect(validateCalls).toBe(1);
+  });
+
+  it("drops an out-of-order validation response (stale verdict never wins)", async () => {
+    const user = userEvent.setup();
+    let validateCalls = 0;
+    server.use(
+      http.post("/api/projects/hello/validate", async () => {
+        validateCalls += 1;
+        if (validateCalls === 1) {
+          // First (older) request resolves LAST, and with an error.
+          await new Promise((r) => setTimeout(r, 500));
+          return HttpResponse.json({
+            ok: false,
+            kind: "eval",
+            issues: [
+              {
+                severity: "error",
+                message: "STALE VERDICT",
+                pointer: null,
+                line: null,
+                column: null,
+                hint: null,
+              },
+            ],
+          });
+        }
+        return HttpResponse.json(assistDraft.validation);
+      }),
+    );
+
+    await walkToReview(user);
+    const editor = screen.getByLabelText("Drafted eval YAML");
+    await user.type(editor, "a");
+    await waitFor(() => expect(validateCalls).toBe(1));
+    await user.type(editor, "b");
+    await waitFor(() => expect(validateCalls).toBe(2));
+    // Let the delayed first response land — the monotonic guard must
+    // discard it, keeping the newer OK verdict and an enabled save.
+    await new Promise((r) => setTimeout(r, 600));
+    expect(screen.queryByText("STALE VERDICT")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save eval set" }),
+    ).toBeEnabled();
+  });
+
+  it("clamps a typed case count to the wizard bounds", async () => {
+    const user = userEvent.setup();
+    const draftBodies: EvalAssistDraftRequest[] = [];
+    server.use(
+      http.post("/api/evals/assist/draft", async ({ request }) => {
+        draftBodies.push((await request.json()) as EvalAssistDraftRequest);
+        return HttpResponse.json(assistDraft);
+      }),
+    );
+
+    renderRoute("/projects/hello/evals");
+    await user.click(
+      await screen.findByRole("button", { name: /Draft with AI/ }),
+    );
+    await user.type(
+      await screen.findByLabelText("What must the agent do?"),
+      "Greet the caller by name.",
+    );
+    await user.click(
+      screen.getByRole("button", { name: /Ask clarifying questions/ }),
+    );
+    const cases = await screen.findByLabelText("Cases");
+    await user.clear(cases);
+    await user.type(cases, "500");
+    await user.tab(); // blur normalises the visible value…
+    expect(cases).toHaveValue(50);
+    await user.click(screen.getByRole("button", { name: /Draft eval set/ }));
+    await screen.findByRole("button", { name: "Save eval set" });
+    // …and the submitted count is clamped either way.
+    expect(draftBodies[0]!.case_count).toBe(50);
+  });
+
   it("blocks generation when no provider key is configured", async () => {
     const user = userEvent.setup();
     server.use(

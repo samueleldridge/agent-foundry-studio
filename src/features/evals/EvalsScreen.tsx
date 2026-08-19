@@ -253,11 +253,16 @@ export function EvalsScreen() {
         open={launchOpen}
         onOpenChange={setLaunchOpen}
       />
-      <EvalDraftWizard
-        project={name}
-        open={draftOpen}
-        onOpenChange={setDraftOpen}
-      />
+      {/* Mounted only while open (same pattern as ForgeScreen) so every
+          open starts the wizard from a fresh describe step instead of
+          stale state from the previous session. */}
+      {draftOpen && (
+        <EvalDraftWizard
+          project={name}
+          open={draftOpen}
+          onOpenChange={setDraftOpen}
+        />
+      )}
     </div>
   );
 }
