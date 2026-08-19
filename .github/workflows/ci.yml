@@ -1,10 +1,12 @@
 # Foundry Studio frontend CI — the Node job from docs/03 § Phase 10c:
-# npm ci → generated-types drift check → lint → typecheck → test → build.
+# npm ci → lint → typecheck → test → build. Fully standalone: no backend,
+# no secrets, no network beyond the npm registry (tests run against msw).
 # (The backend repo keeps its own gate: scripts/smoke_studio.py.)
 name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -24,26 +26,46 @@ jobs:
 
   # Generated-types drift check: regenerates src/api/schema.d.ts against a
   # live control plane (the backend repo, sibling checkout) and diffs.
-  # Requires the agent-foundry repo to be readable by this workflow — for a
-  # private backend set the AGENT_FOUNDRY_TOKEN secret (contents: read).
+  #
+  # Best-effort by design: the backend repo may be private (forks and fresh
+  # clones have no AGENT_FOUNDRY_TOKEN), so this job only runs on the
+  # canonical repo, and a failed backend checkout or boot skips the check
+  # with a notice instead of failing the pipeline. The `node` job above is
+  # the required gate.
   gen-check:
+    if: github.repository_owner == 'samueleldridge'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - name: Check out the backend (best-effort)
+        id: backend
+        continue-on-error: true
+        uses: actions/checkout@v4
         with:
           repository: samueleldridge/agent-foundry
           token: ${{ secrets.AGENT_FOUNDRY_TOKEN || github.token }}
           path: backend
+      - name: Backend unavailable — skip the drift check
+        if: steps.backend.outcome != 'success'
+        run: >-
+          echo "::notice title=gen-check skipped::agent-foundry checkout
+          failed (private repo without AGENT_FOUNDRY_TOKEN?) — skipping the
+          generated-types drift check."
       - uses: actions/setup-node@v4
+        if: steps.backend.outcome == 'success'
         with:
           node-version: 26
           cache: npm
       - uses: astral-sh/setup-uv@v5
+        if: steps.backend.outcome == 'success'
         with:
           python-version: "3.12"
       - run: npm ci
+        if: steps.backend.outcome == 'success'
       - name: Boot the control plane (API only)
+        id: boot
+        if: steps.backend.outcome == 'success'
+        continue-on-error: true
         working-directory: backend
         run: |
           uv sync --frozen
@@ -52,4 +74,14 @@ jobs:
             curl -fsS http://127.0.0.1:4400/api/health > /dev/null && break
             sleep 1
           done
+          # The loop above exits 0 even if the backend never came up —
+          # verify health explicitly so a dead backend is not mistaken
+          # for a booted one.
+          curl -fsS http://127.0.0.1:4400/api/health > /dev/null || exit 1
+      - name: Backend failed to boot — skip the drift check
+        if: steps.backend.outcome == 'success' && steps.boot.outcome != 'success'
+        run: >-
+          echo "::notice title=gen-check skipped::backend health check never
+          went green — skipping the generated-types drift check."
       - run: npm run generate:api:check
+        if: steps.backend.outcome == 'success' && steps.boot.outcome == 'success'
