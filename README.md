@@ -9,6 +9,17 @@ The web console for [agent-foundry](https://github.com/samueleldridge/agent-foun
 
 This repo is intentionally **separate** from the framework repo: it has its own git history, and `agent-foundry` never contains Node artifacts. The backend control-plane API (`foundry.studio`) lives there and serves this app's built assets.
 
+```mermaid
+flowchart LR
+  B["Browser SPA<br/>React 19 · TanStack Query"] -->|"REST + SSE /api/*"| CP["foundry.studio<br/>control plane (FastAPI)"]
+  CP --> RM["Run manager<br/>chat runs · HITL approvals"]
+  CP --> FR["Forge sessions<br/>live trajectory streams"]
+  CP --> CFG["Config validation<br/>+ commit-on-save"]
+  CP --> OBS["Observability mirror<br/>cost · runs · eval trends"]
+  CFG --> GIT[("git")]
+  FR --> GIT
+```
+
 > **No backend? No problem.** `npm install && npm test` runs the full suite completely offline: every API is mocked with [msw](https://mswjs.io/) and SSE streams ride a shared EventSource mock — no backend process, no API keys, no network. Lint, typecheck, and build are equally standalone; only `npm run dev` and `npm run generate:api` need the real control plane.
 
 ## Prerequisites
